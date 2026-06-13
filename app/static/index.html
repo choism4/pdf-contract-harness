@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>pdf-contract-writer</title>
+<style>
+  :root { --bg:#1e1f23; --panel:#26282e; --line:#3a3d45; --txt:#e6e7ea;
+          --muted:#9aa0aa; --accent:#e0483d; --accent2:#3d7be0; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;
+         background:var(--bg); color:var(--txt); display:flex; height:100vh; }
+  /* 좌측: 프로젝트 목록 */
+  #sidebar { width:230px; flex:0 0 230px; background:var(--panel);
+             border-right:1px solid var(--line); overflow:auto; padding:12px; }
+  #sidebar h1 { font-size:13px; color:var(--muted); margin:0 0 10px;
+                text-transform:uppercase; letter-spacing:.05em; }
+  .proj { padding:8px 10px; border-radius:6px; cursor:pointer; margin-bottom:4px; }
+  .proj:hover { background:#2f323a; }
+  .proj.active { background:var(--accent); color:#fff; }
+  .proj small { display:block; color:var(--muted); font-size:11px; }
+  .proj.active small { color:#ffd; }
+  /* 중앙: 페이지 + 오버레이 */
+  #main { flex:1; overflow:auto; padding:20px; display:flex;
+          flex-direction:column; align-items:center; }
+  #toolbar { width:100%; display:flex; gap:10px; align-items:center;
+             margin-bottom:14px; color:var(--muted); }
+  #toolbar .title { color:var(--txt); font-weight:600; }
+  #toolbar button { background:var(--panel); color:var(--txt);
+        border:1px solid var(--line); border-radius:6px; padding:5px 10px;
+        cursor:pointer; }
+  #toolbar button:hover { border-color:var(--accent2); }
+  #stage { position:relative; line-height:0; box-shadow:0 4px 24px #0008;
+           background:#fff; }
+  #stage img { display:block; max-width:100%; height:auto; }
+  /* 오버레이 박스: bbox_norm을 %로 배치(해상도 독립) */
+  .box { position:absolute; border:2px solid var(--accent);
+         background:rgba(224,72,61,.10); cursor:default; }
+  .box[data-type="checkbox"] { border-color:var(--accent2);
+         background:rgba(61,123,224,.12); }
+  .box[data-type="signature_seal"] { border-color:#c04bd0;
+         background:rgba(192,75,208,.12); }
+  .box[data-status="confirmed"] { border-style:solid; box-shadow:0 0 0 2px #2fbf6b; }
+  .box .tag { position:absolute; left:0; top:-17px; font-size:11px;
+         line-height:15px; white-space:nowrap; background:var(--accent);
+         color:#fff; padding:0 5px; border-radius:3px; }
+  .box[data-type="checkbox"] .tag { background:var(--accent2); }
+  .box[data-type="signature_seal"] .tag { background:#c04bd0; }
+  /* 우측: 필드 목록 */
+  #fields { width:300px; flex:0 0 300px; background:var(--panel);
+            border-left:1px solid var(--line); overflow:auto; padding:12px; }
+  #fields h2 { font-size:13px; color:var(--muted); margin:0 0 10px;
+               text-transform:uppercase; letter-spacing:.05em; }
+  .frow { padding:7px 9px; border:1px solid var(--line); border-radius:6px;
+          margin-bottom:6px; cursor:pointer; }
+  .frow:hover, .frow.hi { border-color:var(--accent); background:#2f323a; }
+  .frow .lbl { font-weight:600; }
+  .frow .meta { color:var(--muted); font-size:11px; }
+  .empty { color:var(--muted); padding:20px; text-align:center; }
+  #status { position:fixed; bottom:10px; right:14px; font-size:11px;
+            color:var(--muted); }
+</style>
+</head>
+<body>
+  <aside id="sidebar"><h1>Projects</h1><div id="projlist"></div></aside>
+
+  <main id="main">
+    <div id="toolbar">
+      <span class="title" id="ttitle">프로젝트를 선택하세요</span>
+      <span id="pageinfo"></span>
+      <span style="flex:1"></span>
+      <button id="prev">◀</button>
+      <button id="next">▶</button>
+    </div>
+    <div id="stage"><img id="pageimg" alt=""></div>
+  </main>
+
+  <aside id="fields"><h2>Fields</h2><div id="fieldlist" class="empty">—</div></aside>
+  <div id="status"></div>
+
+<script>
+const S = { subject:null, page:0, doc:null, mtime:0, poll:null };
+
+async function j(url, opts){ const r = await fetch(url, opts);
+  if(!r.ok) throw new Error(url+" "+r.status); return r.json(); }
+
+async function loadProjects(){
+  const {projects} = await j("/api/projects");
+  const el = document.getElementById("projlist");
+  el.innerHTML = "";
+  if(!projects.length){ el.innerHTML = '<div class="empty">projects/ 비어있음</div>'; return; }
+  for(const p of projects){
+    const d = document.createElement("div");
+    d.className = "proj" + (p.subject===S.subject ? " active":"");
+    d.innerHTML = `${p.subject}<small>${p.has_fields?"fields ✓":"미추출"}${p.has_export?" · export ✓":""}</small>`;
+    d.onclick = ()=> selectProject(p.subject);
+    el.appendChild(d);
+  }
+}
+
+async function selectProject(subject){
+  S.subject = subject; S.page = 0;
+  await loadProjects();
+  await loadDoc();
+  startPolling();
+}
+
+async function loadDoc(){
+  try { S.doc = await j(`/api/project/${encodeURIComponent(S.subject)}`); }
+  catch(e){ document.getElementById("ttitle").textContent =
+    S.subject + " — fields.json 없음 (추출 스킬 먼저)"; S.doc=null; render(); return; }
+  render();
+}
+
+function pageFields(){ return (S.doc?.fields||[]).filter(f=>f.page===S.page); }
+function pageMeta(){ return (S.doc?.pages||[])[S.page]; }
+
+function render(){
+  const t = document.getElementById("ttitle");
+  if(!S.doc){ document.getElementById("pageimg").src="";
+    document.getElementById("fieldlist").innerHTML='<div class="empty">—</div>'; return; }
+  t.textContent = S.doc.subject;
+  document.getElementById("pageinfo").textContent =
+    `· page ${S.page+1}/${S.doc.page_count}`;
+  // 페이지 이미지 (cache-bust)
+  const img = document.getElementById("pageimg");
+  img.src = `/api/project/${encodeURIComponent(S.subject)}/page/${S.page}?v=${S.mtime}`;
+  drawBoxes();
+  drawList();
+}
+
+function drawBoxes(){
+  const stage = document.getElementById("stage");
+  stage.querySelectorAll(".box").forEach(b=>b.remove());
+  for(const f of pageFields()){
+    const [x0,y0,x1,y1] = f.bbox_norm;
+    const b = document.createElement("div");
+    b.className = "box"; b.dataset.type=f.type; b.dataset.status=f.status;
+    b.dataset.id=f.id;
+    b.style.left=(x0*100)+"%"; b.style.top=(y0*100)+"%";
+    b.style.width=((x1-x0)*100)+"%"; b.style.height=((y1-y0)*100)+"%";
+    const tag = document.createElement("span"); tag.className="tag";
+    tag.textContent = f.label || f.type;
+    b.appendChild(tag);
+    b.onmouseenter = ()=> highlight(f.id,true);
+    b.onmouseleave = ()=> highlight(f.id,false);
+    stage.appendChild(b);
+  }
+}
+
+function drawList(){
+  const el = document.getElementById("fieldlist");
+  const fs = pageFields();
+  if(!fs.length){ el.innerHTML='<div class="empty">이 페이지 필드 없음</div>'; return; }
+  el.className=""; el.innerHTML="";
+  for(const f of fs){
+    const d = document.createElement("div");
+    d.className="frow"; d.dataset.id=f.id;
+    d.innerHTML = `<div class="lbl">${f.label||"<i>라벨 없음</i>"}</div>
+      <div class="meta">${f.type} · ${f.source} · ${f.status}${f.fill_hint?(" · "+f.fill_hint):""}</div>`;
+    d.onmouseenter=()=>highlight(f.id,true);
+    d.onmouseleave=()=>highlight(f.id,false);
+    el.appendChild(d);
+  }
+}
+
+function highlight(id,on){
+  document.querySelectorAll(`.box[data-id="${id}"],.frow[data-id="${id}"]`)
+    .forEach(e=>e.classList.toggle("hi",on));
+  document.querySelectorAll(`.box[data-id="${id}"]`).forEach(e=>{
+    e.style.outline = on ? "3px solid #ffd400" : ""; });
+}
+
+// 페이지 네비
+document.getElementById("prev").onclick=()=>{ if(S.doc&&S.page>0){S.page--;render();} };
+document.getElementById("next").onclick=()=>{ if(S.doc&&S.page<S.doc.page_count-1){S.page++;render();} };
+
+// live-reload: fields.json mtime 폴링 (Claude Code 터미널 수정 반영)
+function startPolling(){
+  if(S.poll) clearInterval(S.poll);
+  S.poll = setInterval(async ()=>{
+    if(!S.subject) return;
+    try {
+      const {mtime} = await j(`/api/project/${encodeURIComponent(S.subject)}/version`);
+      if(mtime && mtime!==S.mtime){
+        S.mtime = mtime;
+        await loadDoc();
+        document.getElementById("status").textContent =
+          "↻ reloaded " + new Date().toLocaleTimeString();
+      }
+    } catch(e){}
+  }, 1500);
+}
+
+loadProjects();
+</script>
+</body>
+</html>
