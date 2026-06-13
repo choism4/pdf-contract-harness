@@ -103,4 +103,16 @@ def put_fields(subject: str, payload: FieldsPayload):
     return {"ok": True, "mtime": fp.stat().st_mtime}
 
 
+@app.post("/api/project/{subject}/export")
+def post_export(subject: str, include_all: bool = False):
+    """confirmed 필드를 export.json으로 익스포트(파일 기반 export.py 재사용)."""
+    from app.export import export_subject
+    project_dir(subject)  # 검증
+    try:
+        exp = export_subject(subject, include_all)
+    except FileNotFoundError as e:
+        raise HTTPException(404, str(e))
+    return {"ok": True, "field_count": exp["field_count"]}
+
+
 app.mount("/static", StaticFiles(directory=STATIC), name="static")

@@ -136,13 +136,13 @@ uvicorn app.server:app --reload   # http://127.0.0.1:8000
 
 ## 로드맵 (phase 순서 — 환경 → 실행)
 
-- **Phase 0 — 환경 구축 (현재):** 폴더 구조, `.venv`, `CLAUDE.md`, `.gitignore`, `requirements.txt`, git init. example PDF를 `projects/보조출연자-근로계약/source.pdf`로 배치.
-- **Phase 1 — 추출 엔진(`extract.py`):** 벡터 밑줄 + underscore + char-box 라벨 복원 + 라벨↔빈칸 연결 + 렌더 → `fields.json` 후보 생성. example PDF로 정확도 검증(오버레이).
-- **Phase 2 — 웹 뷰어:** 렌더 + 오버레이 박스 표시(읽기 전용). 좌표 시각 검증.
-- **Phase 3 — 교정 UI:** 드래그/리사이즈/추가/삭제 → `fields.json` 저장.
-- **Phase 4 — Claude 초안(`draft.py`):** `claude -p`로 의미 라벨/타입/fill_hint 자동 생성.
-- **Phase 5 — 익스포트 + 검증:** `export.json` 생성, 다른 프로젝트 소비 시나리오 검증.
-- **Phase 6 — (추후):** 체크박스·표 셀·서명란 탐지 보강, 스캔 PDF OCR 지원.
+- **Phase 0 ✅ — 환경 구축:** 폴더 구조, `.venv`, `CLAUDE.md`, `.gitignore`, `requirements.txt`, git init. example PDF 배치.
+- **Phase 1 ✅ — 추출 스킬 `extract-pdf-fields`:** 벡터 밑줄 + underscore + char-box 라벨 복원 + 라벨↔빈칸 연결 + 렌더 → `fields.json` 후보. 오버레이로 픽셀 정확 검증됨.
+- **Phase 2 ✅ — 웹 뷰어:** `app/server.py` + `app/static/index.html`. 렌더 + 오버레이(bbox_norm %) + 필드목록 + mtime 폴링 live-reload.
+- **Phase 3 ✅ — 교정 UI:** 드래그/리사이즈/추가/삭제 + 인라인 편집 → `PUT /fields`(atomic). 편집 중 폴링 멈춤.
+- **Phase 4 ✅ — Claude 라벨링 스킬 `label-pdf-fields`:** Claude Code가 `context` 근거로 `label/fill_hint/type/status` 채움. 스크립트 아님, 파일 직접 편집(좌표 불변).
+- **Phase 5 ✅ — 익스포트:** `app/export.py`(CLI `python -m app.export <subject>`) + `POST /export` + 웹 버튼. confirmed 필드 → `export.json`. 다운스트림 fill 시뮬레이션으로 좌표 정확 검증됨.
+- **Phase 6 — (추후):** 체크박스·표 셀·서명란 자동 탐지 보강(`--checkboxes` 실험), 스캔 PDF OCR(pytesseract kor+eng).
 
 ---
 

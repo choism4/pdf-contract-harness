@@ -86,6 +86,7 @@
       <button id="prev">◀</button>
       <button id="next">▶</button>
       <button id="save" class="primary">저장</button>
+      <button id="export">익스포트</button>
     </div>
     <div id="stage"><img id="pageimg" alt=""></div>
   </main>
@@ -282,6 +283,18 @@ document.getElementById("save").onclick=async()=>{
     body:JSON.stringify({data:S.doc})});
   S.mtime=res.mtime; setDirty(false);
   document.getElementById("status").textContent="✓ 저장 "+new Date().toLocaleTimeString();
+};
+
+// 익스포트 (confirmed 필드 → export.json)
+document.getElementById("export").onclick=async()=>{
+  if(!S.doc) return;
+  if(S.dirty){ alert("저장 먼저 하세요 (저장 안 된 변경 있음)"); return; }
+  const conf=S.doc.fields.filter(f=>f.status==="confirmed").length;
+  let all=false;
+  if(conf===0){ if(!confirm("confirmed 필드 0개. draft 포함해 익스포트?")) return; all=true; }
+  const res=await j(`/api/project/${enc(S.subject)}/export?include_all=${all}`,{method:"POST"});
+  document.getElementById("status").textContent=`✓ export.json (${res.field_count} fields)`;
+  loadProjects();
 };
 
 // 네비
