@@ -1,0 +1,336 @@
+{
+  "subject": "보조출연자-근로계약",
+  "source": "source.pdf",
+  "page_count": 1,
+  "pages": [
+    {
+      "index": 0,
+      "size_pt": [
+        595.0,
+        841.0
+      ],
+      "render": {
+        "file": "page-0.png",
+        "scale": 2.0,
+        "size_px": [
+          1190,
+          1682
+        ]
+      }
+    }
+  ],
+  "fields": [
+    {
+      "id": "f1",
+      "page": 0,
+      "type": "underline",
+      "label": "",
+      "fill_hint": "",
+      "context": "(이하 ” 갑 ” 이라 함  ) 과 _______________(이하  “을 ” 이라 함  ) 은 다음과 같 이영상물의 보조출연자 일용 근로계약을 체결한다 \n.",
+      "value": null,
+      "bbox_pt": [
+        18.0,
+        92.16,
+        139.2,
+        92.64
+      ],
+      "bbox_norm": [
+        0.0302,
+        0.1096,
+        0.234,
+        0.1102
+      ],
+      "source": "vector",
+      "confidence": 0.9,
+      "status": "draft"
+    },
+    {
+      "id": "f2",
+      "page": 0,
+      "type": "underline",
+      "label": "임금",
+      "fill_hint": "",
+      "context": "6. 임금 : 시급 원",
+      "value": null,
+      "bbox_pt": [
+        88.56,
+        200.64,
+        131.76,
+        201.12
+      ],
+      "bbox_norm": [
+        0.1488,
+        0.2386,
+        0.2214,
+        0.2391
+      ],
+      "source": "vector",
+      "confidence": 0.9,
+      "status": "draft"
+    },
+    {
+      "id": "f3",
+      "page": 0,
+      "type": "underline",
+      "label": "동의합니다.",
+      "fill_hint": "",
+      "context": "위 사항에 모두 동의합니다.  (서명 \n )",
+      "value": null,
+      "bbox_pt": [
+        305.28,
+        663.36,
+        411.36,
+        664.32
+      ],
+      "bbox_norm": [
+        0.5131,
+        0.7888,
+        0.6914,
+        0.7899
+      ],
+      "source": "vector",
+      "confidence": 0.9,
+      "status": "draft"
+    },
+    {
+      "id": "f4",
+      "page": 0,
+      "type": "underline",
+      "label": "이름",
+      "fill_hint": "",
+      "context": "이름 : 주민등록번호 : 연락처 :",
+      "value": null,
+      "bbox_pt": [
+        51.12,
+        692.16,
+        123.6,
+        693.12
+      ],
+      "bbox_norm": [
+        0.0859,
+        0.823,
+        0.2077,
+        0.8242
+      ],
+      "source": "vector",
+      "confidence": 0.9,
+      "status": "draft"
+    },
+    {
+      "id": "f5",
+      "page": 0,
+      "type": "underline",
+      "label": "주민등록번호",
+      "fill_hint": "",
+      "context": "이름 : 주민등록번호 : 연락처 :",
+      "value": null,
+      "bbox_pt": [
+        201.6,
+        692.16,
+        321.84,
+        693.12
+      ],
+      "bbox_norm": [
+        0.3388,
+        0.823,
+        0.5409,
+        0.8242
+      ],
+      "source": "vector",
+      "confidence": 0.9,
+      "status": "draft"
+    },
+    {
+      "id": "f6",
+      "page": 0,
+      "type": "underline",
+      "label": "연락처",
+      "fill_hint": "",
+      "context": "이름 : 주민등록번호 : 연락처 :",
+      "value": null,
+      "bbox_pt": [
+        362.16,
+        692.16,
+        483.36,
+        693.12
+      ],
+      "bbox_norm": [
+        0.6087,
+        0.823,
+        0.8124,
+        0.8242
+      ],
+      "source": "vector",
+      "confidence": 0.9,
+      "status": "draft"
+    },
+    {
+      "id": "f7",
+      "page": 0,
+      "type": "underline",
+      "label": "프로그램명",
+      "fill_hint": "",
+      "context": "프로그램명 : 시작시간 :",
+      "value": null,
+      "bbox_pt": [
+        79.44,
+        714.72,
+        209.28,
+        715.68
+      ],
+      "bbox_norm": [
+        0.1335,
+        0.8498,
+        0.3517,
+        0.851
+      ],
+      "source": "vector",
+      "confidence": 0.9,
+      "status": "draft"
+    },
+    {
+      "id": "f8",
+      "page": 0,
+      "type": "underline",
+      "label": "시작시간",
+      "fill_hint": "",
+      "context": "프로그램명 : 시작시간 :",
+      "value": null,
+      "bbox_pt": [
+        268.56,
+        714.72,
+        374.64,
+        715.68
+      ],
+      "bbox_norm": [
+        0.4514,
+        0.8498,
+        0.6296,
+        0.851
+      ],
+      "source": "vector",
+      "confidence": 0.9,
+      "status": "draft"
+    },
+    {
+      "id": "f9",
+      "page": 0,
+      "type": "underline",
+      "label": "주소",
+      "fill_hint": "",
+      "context": "주소 :",
+      "value": null,
+      "bbox_pt": [
+        51.36,
+        737.04,
+        372.72,
+        738.0
+      ],
+      "bbox_norm": [
+        0.0863,
+        0.8764,
+        0.6264,
+        0.8775
+      ],
+      "source": "vector",
+      "confidence": 0.9,
+      "status": "draft"
+    },
+    {
+      "id": "f10",
+      "page": 0,
+      "type": "underline",
+      "label": "은행명",
+      "fill_hint": "",
+      "context": "은행명 : 계좌번호 : 예금주명 :",
+      "value": null,
+      "bbox_pt": [
+        60.48,
+        758.64,
+        152.16,
+        759.6
+      ],
+      "bbox_norm": [
+        0.1016,
+        0.9021,
+        0.2557,
+        0.9032
+      ],
+      "source": "vector",
+      "confidence": 0.9,
+      "status": "draft"
+    },
+    {
+      "id": "f11",
+      "page": 0,
+      "type": "underline",
+      "label": "계좌번호",
+      "fill_hint": "",
+      "context": "은행명 : 계좌번호 : 예금주명 :",
+      "value": null,
+      "bbox_pt": [
+        211.2,
+        758.64,
+        350.4,
+        759.6
+      ],
+      "bbox_norm": [
+        0.355,
+        0.9021,
+        0.5889,
+        0.9032
+      ],
+      "source": "vector",
+      "confidence": 0.9,
+      "status": "draft"
+    },
+    {
+      "id": "f12",
+      "page": 0,
+      "type": "underline",
+      "label": "예금주명",
+      "fill_hint": "",
+      "context": "은행명 : 계좌번호 : 예금주명 :",
+      "value": null,
+      "bbox_pt": [
+        409.68,
+        758.64,
+        515.76,
+        759.6
+      ],
+      "bbox_norm": [
+        0.6885,
+        0.9021,
+        0.8668,
+        0.9032
+      ],
+      "source": "vector",
+      "confidence": 0.9,
+      "status": "draft"
+    },
+    {
+      "id": "f13",
+      "page": 0,
+      "type": "underscore_blank",
+      "label": "과",
+      "fill_hint": "",
+      "context": "(이하 ” 갑 ” 이라 함  ) 과 _______________(이하  “을 ” 이라 함  ) 은 다음과 같 이영상물의 보조출연자 일용 근로계약을 체결한다 \n.",
+      "value": null,
+      "bbox_pt": [
+        151.36,
+        91.74,
+        206.43,
+        92.11
+      ],
+      "bbox_norm": [
+        0.2544,
+        0.1091,
+        0.3469,
+        0.1095
+      ],
+      "source": "underscore",
+      "confidence": 0.9,
+      "status": "draft"
+    }
+  ]
+}
