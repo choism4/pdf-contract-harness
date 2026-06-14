@@ -72,9 +72,9 @@
   #projfilter:focus { background-color:#fff; border-color:var(--accent-focus);
        box-shadow:0 0 0 3px rgba(0,113,227,.18); }
   body.sb-collapsed #sidebar { display:none; }
-  #sbexpand { display:none; position:fixed; left:10px; top:14px; z-index:70;
+  #sbexpand { display:none; position:fixed; left:14px; top:12px; z-index:70;
               width:34px; height:34px; border-radius:9px; padding:0; font-size:18px;
-              box-shadow:0 2px 10px rgba(0,0,0,.14); }
+              color:var(--muted); box-shadow:0 2px 10px rgba(0,0,0,.14); }
   body.sb-collapsed #sbexpand { display:flex; align-items:center; justify-content:center; }
   body.sb-collapsed #toolbar { padding-left:58px; }   /* clear floating expand button */
   .proj { padding:9px 11px; border-radius:10px; cursor:pointer; margin-bottom:3px;
@@ -104,12 +104,14 @@
   .pagenav:active { transform:translateY(-50%); }
   .pagenav.left { left:14px; } .pagenav.right { right:14px; }
   .pagenav[disabled] { opacity:0 !important; pointer-events:none; }
-  #toolbar { flex:0 0 auto; z-index:50; display:flex; gap:8px;
-             align-items:center; color:var(--muted); flex-wrap:nowrap;
+  #toolbar { flex:0 0 auto; z-index:50; display:flex; gap:8px; row-gap:8px;
+             align-items:center; color:var(--muted); flex-wrap:wrap;
              background:rgba(245,245,247,.8); backdrop-filter:saturate(180%) blur(20px);
              -webkit-backdrop-filter:saturate(180%) blur(20px); padding:11px 18px;
              border-bottom:1px solid var(--line); }
-  #toolbar > button, #toolbar > .zoomgrp { flex:0 0 auto; }
+  #toolbar > .zoomgrp, .tbactions { flex:0 0 auto; }
+  /* action cluster wraps together (never clips a lone button) */
+  .tbactions { display:flex; gap:8px; align-items:center; margin-left:auto; }
   #scroll { flex:1; overflow:auto; padding:24px; display:flex;
             flex-direction:column; align-items:stretch; }
   #toolbar .title { color:var(--ink); font-weight:600; font-size:15px; letter-spacing:-0.02em;
@@ -223,6 +225,23 @@
   .seg button.on.drafton { color:#c07d1e; }
   .prowbtn { display:flex; gap:8px; margin-top:14px; }
   .prowbtn button { flex:1; }
+  /* iOS-style nav header: back at top-left */
+  .ptitle.nav { padding:7px 12px 7px 7px; }
+  .navback { background:transparent; border:none; color:var(--accent); font-size:14px;
+             font-weight:400; letter-spacing:-0.01em; text-transform:none;
+             padding:4px 9px 4px 5px; border-radius:7px; display:flex; align-items:center;
+             gap:1px; line-height:1; }
+  .navback .chev { font-size:19px; line-height:1; margin-top:-1px; }
+  .navback:hover { background:rgba(0,102,204,.08); }
+  .navback:active { transform:none; }
+  /* full-width destructive delete (iOS) */
+  .delbtn { width:100%; margin-top:16px; color:var(--danger); background:var(--panel);
+            border-color:var(--line); font-weight:500; }
+  .delbtn:hover { background:#fff5f5; border-color:var(--danger); }
+  /* drop ugly native number spinner */
+  .prow.num input[type=number] { -moz-appearance:textfield; appearance:textfield; }
+  .prow.num input::-webkit-outer-spin-button,
+  .prow.num input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
   /* field list */
   .ftools { display:flex; align-items:center; gap:8px; margin-bottom:11px; }
   .ftools #fsearch { font-size:13px; padding:6px 9px; }
@@ -282,10 +301,11 @@
         <button id="zoomlbl" title="Reset to fit">100%</button>
         <button id="zoomin" title="Zoom in">+</button>
       </div>
-      <span style="flex:1"></span>
-      <button id="addbtn">+ Add field</button>
-      <button id="save" class="primary">Save</button>
-      <button id="export" class="ghost-pill">Export</button>
+      <div class="tbactions">
+        <button id="addbtn">+ Add field</button>
+        <button id="save" class="primary">Save</button>
+        <button id="export" class="ghost-pill">Export</button>
+      </div>
     </div>
     <button class="pagenav left" id="prev" title="Previous page">‹</button>
     <button class="pagenav right" id="next" title="Next page">›</button>
@@ -593,7 +613,7 @@ function editorHTML(f){
   const [x0,y0,x1,y1]=f.bbox_pt;
   const co=(v)=>v.toFixed(1);
   return `<div class="panel">
-    <div class="ptitle sticky"><span>Properties</span><span class="sp"></span><span class="chip">${f.id}</span></div>
+    <div class="ptitle sticky nav"><button id="e_back" class="navback"><span class="chev">‹</span>Fields</button><span class="sp"></span><span class="chip">${f.id}</span></div>
     <div class="pbody">
       <div class="prow"><span class="k">Label</span><span class="v"><input id="e_label" value="${esc(f.label)}" placeholder="e.g. Name"></span></div>
       <div class="prow"><span class="k">Example</span><span class="v"><input id="e_ex" value="${esc(f.example||"")}" placeholder="sample value, e.g. John Doe"></span></div>
@@ -608,11 +628,8 @@ function editorHTML(f){
         <div class="c"><label>W</label><input value="${co(x1-x0)}" readonly></div>
         <div class="c"><label>H</label><input value="${co(y1-y0)}" readonly></div>
       </div></div></div>
-      <div class="prowbtn">
-        <button id="e_close">← Back</button>
-        <button id="e_del" style="border-color:var(--danger);color:var(--danger)">Delete</button>
-      </div>
-      <div class="empty" style="text-align:left;padding:8px 0 0;font-size:11px">source: ${f.source} · drag the box / corners to move &amp; resize</div>
+      <button id="e_del" class="delbtn">Delete field</button>
+      <div class="empty" style="text-align:left;padding:10px 2px 0;font-size:11px">source: ${f.source} · drag the box / corners to move &amp; resize</div>
     </div></div>`;
 }
 function bindEditor(){
@@ -626,7 +643,7 @@ function bindEditor(){
   document.querySelectorAll("#right .tseg button").forEach(b=>{
     b.onclick=()=>{ if(f.type!==b.dataset.t){ pushUndo(); f.type=b.dataset.t; setDirty(true); drawBoxes(); drawRight(); } };
   });
-  g("e_close").onclick=()=>{ S.sel=null; render(); };
+  g("e_back").onclick=()=>{ S.sel=null; render(); };
   g("e_del").onclick=deleteSelected;
 }
 

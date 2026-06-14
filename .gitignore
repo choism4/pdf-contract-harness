@@ -3,8 +3,13 @@
 __pycache__/
 *.pyc
 
-# Rendered page images (regenerated from source.pdf)
-projects/*/page-*.png
-
 # OS
 .DS_Store
+
+# User working projects — only the bundled sample ships in the repo
+projects/*/
+!projects/sample-employment-contract/
+
+# Generated page renders are never committed (regenerated from source.pdf)
+projects/**/page-*.png
+projects/**/*.overlay.png
