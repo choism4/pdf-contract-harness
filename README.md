@@ -64,8 +64,8 @@ The result is a precise-coordinate `export.json` that *another* program (or anot
 > Requires **Python 3.14+**. Clone and run.
 
 ```bash
-git clone https://github.com/choism4/pdf-contract-assistant.git
-cd pdf-contract-assistant
+git clone https://github.com/choism4/pdf-contract-harness.git
+cd pdf-contract-harness
 
 # 1. virtualenv + deps
 python3 -m venv .venv
