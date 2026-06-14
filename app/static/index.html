@@ -190,6 +190,14 @@
             background:rgba(255,255,255,.8); backdrop-filter:blur(8px);
             -webkit-backdrop-filter:blur(8px); padding:4px 10px; border-radius:980px; }
   .dirty { color:var(--warn); }
+  /* right-click context menu */
+  #ctxmenu { position:fixed; z-index:100; display:none; min-width:210px;
+             background:var(--panel); border:1px solid var(--line); border-radius:11px;
+             box-shadow:0 10px 32px rgba(0,0,0,.20); padding:5px; font-size:13px; }
+  #ctxmenu .item { padding:8px 12px; border-radius:7px; cursor:pointer; white-space:nowrap; }
+  #ctxmenu .item:hover { background:var(--accent); color:#fff; }
+  #ctxmenu .hint { color:var(--muted); font-size:11px; padding:5px 12px 4px; }
+  #ctxmenu .sep { height:1px; background:var(--line-soft); margin:4px 6px; }
 </style>
 </head>
 <body>
@@ -220,6 +228,7 @@
   <div id="status"></div>
   <div id="bulkbar"><span id="bulkn"></span>
     <button id="bulkdel">Delete</button><button id="bulkclear">Clear</button></div>
+  <div id="ctxmenu"></div>
 
 <script>
 const S = { subject:null, page:0, doc:null, mtime:0, poll:null,
@@ -679,6 +688,49 @@ document.getElementById("export").onclick=async()=>{
   document.getElementById("status").textContent=`✓ export.json (${res.field_count} fields)`;
   loadProjects();
 };
+
+// ── right-click: copy location / field info ──────────
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); }
+  catch(e){ const ta=document.createElement("textarea"); ta.value=t;
+    document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }
+  document.getElementById("status").textContent="✓ copied to clipboard";
+}
+function ptFromEvent(ev){
+  const r=imgRect(), m=pageMeta(); const [w,h]=m?m.size_pt:[0,0];
+  const nx=(ev.clientX-r.left)/r.width, ny=(ev.clientY-r.top)/r.height;
+  return { nx:r4(nx), ny:r4(ny), xpt:r2(nx*w), ypt:r2(ny*h) };
+}
+function hideCtx(){ document.getElementById("ctxmenu").style.display="none"; }
+function showCtx(ev){
+  if(!S.doc) return; ev.preventDefault();
+  const menu=document.getElementById("ctxmenu");
+  const boxEl=ev.target.closest&&ev.target.closest(".box");
+  const p=ptFromEvent(ev);
+  const base={ project:S.subject, page:S.page };
+  const items=[];
+  if(boxEl){ const f=field(boxEl.dataset.id);
+    if(f){
+      items.push({t:`Copy field info — ${f.label||f.type}`, run:()=>copyText(JSON.stringify(
+        {...base, field:{id:f.id,label:f.label,type:f.type,bbox_pt:f.bbox_pt,bbox_norm:f.bbox_norm}}))});
+    }
+  }
+  items.push({t:"Copy location (point)", run:()=>copyText(JSON.stringify(
+    {...base, point_pt:[p.xpt,p.ypt], point_norm:[p.nx,p.ny]}))});
+  let html=`<div class="hint">${esc(S.subject)} · page ${S.page+1} · x=${p.xpt} y=${p.ypt} pt</div><div class="sep"></div>`;
+  html+=items.map((it,i)=>`<div class="item" data-i="${i}">${esc(it.t)}</div>`).join("");
+  menu.innerHTML=html; menu.style.display="block";
+  const mw=menu.offsetWidth||220, mh=menu.offsetHeight||100;
+  menu.style.left=Math.min(ev.clientX, innerWidth-mw-8)+"px";
+  menu.style.top=Math.min(ev.clientY, innerHeight-mh-8)+"px";
+  menu.querySelectorAll(".item").forEach(el=>{
+    el.onclick=()=>{ items[+el.dataset.i].run(); hideCtx(); };
+  });
+}
+document.getElementById("stage").addEventListener("contextmenu", showCtx);
+document.addEventListener("click", hideCtx);
+document.addEventListener("scroll", hideCtx, true);
+window.addEventListener("blur", hideCtx);
 
 // nav
 document.getElementById("prev").onclick=()=>{ if(S.doc&&S.page>0){S.page--;S.sel=null;render();} };
