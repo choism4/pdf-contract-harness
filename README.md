@@ -15,9 +15,9 @@ Deterministic geometry for the *positions*. Claude for the *meaning*. You for th
 
 <br>
 
-<img src="docs/hero.gif?v=3" alt="Claude Code labels a contract's fields, boxes snap into place, values fill in, export" width="94%" />
+<img src="docs/hero.gif?v=4" alt="Claude Code labels a contract's fields, boxes snap into place, values fill in, export" width="94%" />
 
-<sub>Claude reads the page → fields drop into place → right-click any field to copy its exact location → point &amp; say <i>"fix this"</i> → it snaps tight → export. <a href="docs/hero.mp4">▶ watch in HD</a></sub>
+<sub>Claude reads the page → fields drop into place → right-click a loose one to copy its exact location → paste it into an instruction → it snaps onto the line → export. <a href="docs/hero.mp4">▶ watch in HD</a></sub>
 
 </div>
 
