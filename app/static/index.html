@@ -43,6 +43,8 @@
                  font-size:14px; transition:border-color .15s ease, box-shadow .15s ease; }
   input:focus,select:focus { outline:none; border-color:var(--accent-focus);
                  box-shadow:0 0 0 3px rgba(0,113,227,.18); }
+  input[readonly] { background:var(--canvas); color:var(--muted); cursor:default; }
+  input[readonly]:focus { border-color:var(--line); box-shadow:none; }
   /* left */
   #sidebar { width:230px; flex:0 0 230px; background:var(--panel);
              border-right:1px solid var(--line); overflow:auto; padding:16px 12px; }
@@ -50,15 +52,31 @@
                 text-transform:uppercase; letter-spacing:.04em;
                 display:flex; align-items:center; }
   #sidebar h1 .sp { flex:1; }
-  #sbcollapse { padding:2px 9px; font-size:16px; line-height:1; border-radius:7px; color:var(--muted); }
-  .searchrow { display:flex; gap:6px; margin-bottom:10px; }
-  .searchrow #projsearch { flex:1; min-width:0; font-size:13px; padding:7px 10px; }
-  #projfilter { flex:0 0 auto; width:auto; font-size:12px; padding:7px 8px; cursor:pointer; }
+  #sbcollapse { padding:4px 8px; font-size:15px; line-height:1; border-radius:7px;
+                color:var(--muted); border:none; background:transparent; }
+  #sbcollapse:hover { background:var(--canvas); color:var(--ink); }
+  .searchrow { display:flex; gap:7px; margin-bottom:12px; }
+  /* inset search field (Apple sidebar style) */
+  .searchrow #projsearch { flex:1; min-width:0; font-size:13px; padding:7px 11px;
+       background:var(--canvas); border:1px solid transparent; border-radius:8px;
+       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 13 13'%3E%3Cg fill='none' stroke='%238a8a8e' stroke-width='1.4'%3E%3Ccircle cx='5.5' cy='5.5' r='4'/%3E%3Cpath d='M8.5 8.5L12 12' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E");
+       background-repeat:no-repeat; background-position:9px center; padding-left:28px; }
+  .searchrow #projsearch:focus { background-color:#fff; border-color:var(--accent-focus);
+       box-shadow:0 0 0 3px rgba(0,113,227,.18); }
+  /* filter select with single custom chevron */
+  #projfilter { flex:0 0 auto; width:auto; font-size:12px; cursor:pointer; color:var(--ink);
+       appearance:none; -webkit-appearance:none; padding:7px 26px 7px 11px;
+       background:var(--canvas); border:1px solid transparent; border-radius:8px;
+       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%238a8a8e' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+       background-repeat:no-repeat; background-position:right 9px center; }
+  #projfilter:focus { background-color:#fff; border-color:var(--accent-focus);
+       box-shadow:0 0 0 3px rgba(0,113,227,.18); }
   body.sb-collapsed #sidebar { display:none; }
   #sbexpand { display:none; position:fixed; left:10px; top:14px; z-index:70;
               width:34px; height:34px; border-radius:9px; padding:0; font-size:18px;
               box-shadow:0 2px 10px rgba(0,0,0,.14); }
   body.sb-collapsed #sbexpand { display:flex; align-items:center; justify-content:center; }
+  body.sb-collapsed #toolbar { padding-left:58px; }   /* clear floating expand button */
   .proj { padding:9px 11px; border-radius:10px; cursor:pointer; margin-bottom:3px;
           transition:background .15s ease; }
   .proj:hover { background:var(--canvas); }
@@ -86,16 +104,25 @@
   .pagenav:active { transform:translateY(-50%); }
   .pagenav.left { left:14px; } .pagenav.right { right:14px; }
   .pagenav[disabled] { opacity:0 !important; pointer-events:none; }
-  #toolbar { flex:0 0 auto; z-index:50; display:flex; gap:7px;
-             align-items:center; color:var(--muted); flex-wrap:wrap;
+  #toolbar { flex:0 0 auto; z-index:50; display:flex; gap:8px;
+             align-items:center; color:var(--muted); flex-wrap:nowrap;
              background:rgba(245,245,247,.8); backdrop-filter:saturate(180%) blur(20px);
              -webkit-backdrop-filter:saturate(180%) blur(20px); padding:11px 18px;
              border-bottom:1px solid var(--line); }
+  #toolbar > button, #toolbar > .zoomgrp { flex:0 0 auto; }
   #scroll { flex:1; overflow:auto; padding:24px; display:flex;
             flex-direction:column; align-items:stretch; }
   #toolbar .title { color:var(--ink); font-weight:600; font-size:15px; letter-spacing:-0.02em;
-            max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  #toolbar #pageinfo { font-size:13px; }
+            flex:0 1 auto; min-width:40px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #toolbar #pageinfo { font-size:13px; flex:0 0 auto; }
+  /* zoom: connected segmented control */
+  .zoomgrp { display:flex; border:1px solid var(--line); border-radius:8px;
+             overflow:hidden; background:var(--panel); }
+  .zoomgrp button { border:0; border-radius:0; background:transparent; padding:6px 12px; }
+  .zoomgrp button:hover { background:var(--pearl); }
+  .zoomgrp button:active { transform:none; }
+  .zoomgrp button + button { border-left:1px solid var(--line); }
+  .zoomgrp #zoomlbl { min-width:56px; color:var(--ink); font-variant-numeric:tabular-nums; }
   #stage { position:relative; line-height:0;
            box-shadow:rgba(0,0,0,0.22) 0 5px 30px 0;
            background:#fff; user-select:none; touch-action:none; margin:0 auto; }
@@ -154,6 +181,7 @@
             -webkit-backdrop-filter:saturate(180%) blur(12px);
             border-bottom:1px solid var(--line-soft); display:flex; align-items:center;
             gap:6px; }
+  .ptitle.sticky { position:sticky; top:0; z-index:3; }
   .ptitle .sp { flex:1; }
   .ptitle .chip { font-size:11px; color:var(--muted); background:var(--canvas);
                   padding:2px 9px; border-radius:980px; font-weight:500;
@@ -174,7 +202,8 @@
   .tseg button { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
                  border:1px solid var(--line); border-radius:10px; background:var(--panel);
                  padding:9px 4px; font-size:11px; color:var(--muted); font-weight:500; }
-  .tseg button .ic { font-size:17px; line-height:1; }
+  .tseg button .ic { font-size:17px; line-height:1; font-variant-emoji:text;
+                     font-weight:600; }
   .tseg button.on { border-color:var(--accent); color:var(--accent);
                     background:rgba(0,102,204,.06); }
   /* coordinate grid X / Y / W / H */
@@ -182,13 +211,16 @@
   .coord .c { display:flex; align-items:center; gap:6px; }
   .coord .c label { font-size:11px; color:var(--muted); width:13px; font-weight:600; }
   .coord .c input { font-size:12px; padding:6px 8px; }
-  /* status segmented toggle */
-  .seg { display:flex; background:var(--canvas); border-radius:9px; padding:2px; gap:2px; }
+  /* status segmented toggle — iOS sliding-thumb style */
+  .seg { display:flex; background:#e8e8ea; border-radius:9px; padding:2px; gap:0; }
   .seg button { flex:1; border:0; border-radius:7px; background:transparent;
-                color:var(--muted); padding:7px 0; font-size:12px; font-weight:500; }
+                color:var(--muted); padding:6px 0; font-size:12px; font-weight:500;
+                transition:color .15s ease, background .2s ease, box-shadow .2s ease; }
   .seg button:hover { background:transparent; }
-  .seg button.on { background:var(--ok); color:#fff; font-weight:600; }
-  .seg button.on.drafton { background:var(--warn); color:#fff; }
+  .seg button:active { transform:none; }
+  .seg button.on { background:#fff; color:#1c7d3f; font-weight:600;
+                   box-shadow:0 1px 3px rgba(0,0,0,.12), 0 0 0 .5px rgba(0,0,0,.04); }
+  .seg button.on.drafton { color:#c07d1e; }
   .prowbtn { display:flex; gap:8px; margin-top:14px; }
   .prowbtn button { flex:1; }
   /* field list */
@@ -197,8 +229,8 @@
   .chk { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted);
          white-space:nowrap; cursor:pointer; user-select:none; }
   .chk input { width:auto; box-shadow:none; }
-  .frow { padding:10px 11px; border:1px solid var(--line); border-radius:10px;
-          margin-bottom:7px; cursor:pointer; display:flex; align-items:center; gap:9px;
+  .frow { padding:9px 11px; border:1px solid var(--line); border-radius:10px;
+          margin-bottom:6px; cursor:pointer; display:flex; align-items:center; gap:9px;
           transition:background .12s ease, border-color .12s ease; }
   .frow:hover, .frow.hi { border-color:var(--accent); background:rgba(0,102,204,.04); }
   .frow.sel { border-color:var(--warn); box-shadow:0 0 0 3px rgba(255,159,10,.16); }
@@ -208,7 +240,8 @@
   .frow .lbl { font-weight:600; flex:1; min-width:0; overflow:hidden; letter-spacing:-0.01em;
                text-overflow:ellipsis; white-space:nowrap; }
   .frow .lbl i { color:var(--muted); font-weight:400; }
-  .frow .ty { font-size:11px; color:var(--muted); }
+  .frow .ty { font-size:10px; color:var(--muted2); background:var(--canvas);
+              padding:2px 8px; border-radius:980px; font-weight:500; flex:0 0 auto; }
   .empty { color:var(--muted); padding:20px 16px; text-align:center; font-size:13px;
            line-height:1.5; }
   #status { position:fixed; bottom:10px; right:14px; font-size:12px; color:var(--muted);
@@ -229,7 +262,7 @@
   <aside id="sidebar">
     <h1>Projects<span class="sp"></span><button id="sbcollapse" title="Collapse panel">‹</button></h1>
     <div class="searchrow">
-      <input id="projsearch" placeholder="Search projects…" autocomplete="off">
+      <input id="projsearch" placeholder="Search" autocomplete="off">
       <select id="projfilter" title="Filter by status">
         <option value="all">All</option>
         <option value="draft">Draft</option>
@@ -244,9 +277,11 @@
     <div id="toolbar">
       <span class="title" id="ttitle">Select a project</span>
       <span id="pageinfo"></span>
-      <button id="zoomout" title="Zoom out">−</button>
-      <button id="zoomlbl" title="Reset to fit">100%</button>
-      <button id="zoomin" title="Zoom in">+</button>
+      <div class="zoomgrp">
+        <button id="zoomout" title="Zoom out">−</button>
+        <button id="zoomlbl" title="Reset to fit">100%</button>
+        <button id="zoomin" title="Zoom in">+</button>
+      </div>
       <span style="flex:1"></span>
       <button id="addbtn">+ Add field</button>
       <button id="save" class="primary">Save</button>
@@ -280,8 +315,8 @@ function doRedo(){ if(!S.doc||!S.redo.length) return; S.undo.push(snapshot()); a
 // 3 field types only
 const TYPES = [
   { v:"text",      label:"Text",      ic:"T" },
-  { v:"checkbox",  label:"Checkbox",  ic:"☑" },
-  { v:"signature", label:"Signature", ic:"✍" },
+  { v:"checkbox",  label:"Checkbox",  ic:"☐︎" },
+  { v:"signature", label:"Signature", ic:"✎︎" },
 ];
 const typeLabel = v => (TYPES.find(t=>t.v===v)||{label:v}).label;
 
@@ -481,7 +516,7 @@ function docPanelHTML(){
 }
 function fieldsListHTML(){
   const fs=pageFields();
-  let h=`<div class="panel"><div class="ptitle"><span>Fields · page ${S.page+1}</span>
+  let h=`<div class="panel"><div class="ptitle sticky"><span>Fields · page ${S.page+1}</span>
         <span class="sp"></span><span class="chip">${fs.length}</span></div><div class="pbody">
         <div class="ftools">
           <input id="fsearch" placeholder="Filter by label…" autocomplete="off" value="${esc(S.fieldQuery||"")}">
@@ -558,7 +593,7 @@ function editorHTML(f){
   const [x0,y0,x1,y1]=f.bbox_pt;
   const co=(v)=>v.toFixed(1);
   return `<div class="panel">
-    <div class="ptitle"><span>Properties</span><span class="sp"></span><span class="chip">${f.id}</span></div>
+    <div class="ptitle sticky"><span>Properties</span><span class="sp"></span><span class="chip">${f.id}</span></div>
     <div class="pbody">
       <div class="prow"><span class="k">Label</span><span class="v"><input id="e_label" value="${esc(f.label)}" placeholder="e.g. Name"></span></div>
       <div class="prow"><span class="k">Example</span><span class="v"><input id="e_ex" value="${esc(f.example||"")}" placeholder="sample value, e.g. John Doe"></span></div>
@@ -728,8 +763,9 @@ document.getElementById("export").onclick=async()=>{
   if(!S.doc) return;
   if(S.dirty){ alert("Please save first (you have unsaved changes)."); return; }
   const res=await j(`/api/project/${enc(S.subject)}/export`,{method:"POST"});
-  document.getElementById("status").textContent=`✓ export.json (${res.field_count} fields)`;
+  document.getElementById("status").textContent=`✓ export.json (${res.field_count} fields) — revealing…`;
   loadProjects();
+  try{ await j(`/api/project/${enc(S.subject)}/reveal`,{method:"POST"}); }catch(e){}
 };
 
 // ── right-click: copy location / field info ──────────

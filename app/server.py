@@ -8,8 +8,10 @@ pdf-contract-writer 웹앱 백엔드 (FastAPI).
 실행: .venv/bin/uvicorn app.server:app --reload   # http://127.0.0.1:8000
 """
 import os
+import sys
 import json
 import tempfile
+import subprocess
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -112,6 +114,25 @@ def put_fields(subject: str, payload: FieldsPayload):
         if os.path.exists(tmp):
             os.unlink(tmp)
     return {"ok": True, "mtime": fp.stat().st_mtime}
+
+
+@app.post("/api/project/{subject}/reveal")
+def post_reveal(subject: str):
+    """export.json(없으면 프로젝트 폴더)을 OS 파일탐색기에서 보여준다(로컬 전용)."""
+    d = project_dir(subject)
+    target = d / "export.json"
+    if not target.exists():
+        target = d
+    try:
+        if sys.platform == "darwin":
+            subprocess.run(["open", "-R", str(target)], check=False)
+        elif sys.platform.startswith("win"):
+            subprocess.run(["explorer", f"/select,{target}"], check=False)
+        else:
+            subprocess.run(["xdg-open", str(d)], check=False)
+    except Exception as e:
+        raise HTTPException(500, f"reveal 실패: {e}")
+    return {"ok": True, "path": str(target)}
 
 
 @app.post("/api/project/{subject}/export")
