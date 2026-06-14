@@ -86,6 +86,18 @@
   .box[data-type="signature"] { border-color:var(--field-sig); background:rgba(175,82,222,.12); }
   .box.sel { outline:2.5px solid var(--warn); outline-offset:1px; z-index:5;
              box-shadow:0 0 0 4px rgba(255,159,10,.22); }
+  .box.msel { outline:2px solid var(--accent); outline-offset:1px;
+              background:rgba(0,102,204,.16); }
+  #band { position:absolute; border:1.5px dashed var(--accent);
+          background:rgba(0,102,204,.08); pointer-events:none; display:none; z-index:7; }
+  #bulkbar { position:fixed; left:50%; bottom:20px; transform:translateX(-50%);
+             display:none; align-items:center; gap:12px; z-index:60;
+             background:var(--ink); color:#fff; padding:9px 10px 9px 16px;
+             border-radius:980px; box-shadow:0 6px 24px rgba(0,0,0,.28); font-size:13px; }
+  #bulkbar button { background:transparent; color:#fff; border:1px solid rgba(255,255,255,.3);
+                    border-radius:980px; padding:5px 13px; }
+  #bulkbar button:hover { background:rgba(255,255,255,.12); }
+  #bulkbar #bulkdel { border-color:var(--danger); color:#ff8b84; }
   .box .tag { position:absolute; left:-1.5px; top:-19px; font-size:11px; line-height:17px;
          white-space:nowrap; background:var(--field); color:#fff; padding:0 6px;
          border-radius:5px; font-weight:500; letter-spacing:-0.01em;
@@ -201,15 +213,28 @@
       <button id="save" class="primary">Save</button>
       <button id="export" class="ghost-pill">Export</button>
     </div>
-    <div id="scroll"><div id="stage"><img id="pageimg" alt=""></div></div>
+    <div id="scroll"><div id="stage"><img id="pageimg" alt=""><div id="band"></div></div></div>
   </main>
 
   <aside id="right"><div id="rightbody"><div class="empty">—</div></div></aside>
   <div id="status"></div>
+  <div id="bulkbar"><span id="bulkn"></span>
+    <button id="bulkdel">Delete</button><button id="bulkclear">Clear</button></div>
 
 <script>
 const S = { subject:null, page:0, doc:null, mtime:0, poll:null,
-            sel:null, dirty:false, mode:"select", zoom:1, anim:0 };
+            sel:null, selSet:new Set(), dirty:false, mode:"select", zoom:1, anim:0,
+            undo:[], redo:[], projQuery:"", fieldQuery:"", hideUnlabeled:false };
+
+// ── undo / redo (snapshot of fields + contract status) ──
+function snapshot(){ return JSON.parse(JSON.stringify({fields:S.doc.fields, status:S.doc.status})); }
+function pushUndo(){ if(!S.doc) return; S.undo.push(snapshot()); if(S.undo.length>80) S.undo.shift(); S.redo=[]; }
+function applySnap(s){ S.doc.fields=s.fields; S.doc.status=s.status;
+  S.sel=null; S.selSet.clear(); setDirty(true); render(); }
+function doUndo(){ if(!S.doc||!S.undo.length) return; S.redo.push(snapshot()); applySnap(S.undo.pop());
+  document.getElementById("status").textContent="↶ undo"; }
+function doRedo(){ if(!S.doc||!S.redo.length) return; S.undo.push(snapshot()); applySnap(S.redo.pop());
+  document.getElementById("status").textContent="↷ redo"; }
 // 3 field types only
 const TYPES = [
   { v:"text",      label:"Text",      ic:"T" },
@@ -360,7 +385,7 @@ function drawBoxes(){
   for(const f of pageFields()){
     const [x0,y0,x1,y1]=f.bbox_norm;
     const b=document.createElement("div");
-    b.className="box"+(f.id===S.sel?" sel":"");
+    b.className="box"+(f.id===S.sel?" sel":"")+(S.selSet.has(f.id)?" msel":"");
     b.dataset.type=f.type; b.dataset.id=f.id;
     b.style.left=(x0*100)+"%"; b.style.top=(y0*100)+"%";
     b.style.width=((x1-x0)*100)+"%"; b.style.height=((y1-y0)*100)+"%";
@@ -377,7 +402,12 @@ function drawBoxes(){
     b.onmousedown=(e)=>startDragResize(e,f);
     stage.appendChild(b);
   }
-  updateGhostSizes();
+  updateGhostSizes(); updateBulkbar();
+}
+function updateBulkbar(){
+  const bar=document.getElementById("bulkbar"), n=S.selSet.size;
+  bar.style.display = n>0 ? "flex" : "none";
+  document.getElementById("bulkn").textContent = n+" selected";
 }
 // ghost example: convert font_size(pt) to px at current render scale
 function updateGhostSizes(){
@@ -425,8 +455,8 @@ function drawRight(){
 }
 function bindDocPanel(){
   const g=id=>document.getElementById(id);
-  if(g("d_draft")) g("d_draft").onclick=()=>{ S.doc.status="draft"; setDirty(true); drawRight(); };
-  if(g("d_conf"))  g("d_conf").onclick =()=>{ S.doc.status="confirmed"; setDirty(true); drawRight(); };
+  if(g("d_draft")) g("d_draft").onclick=()=>{ if(S.doc.status!=="draft"){pushUndo();S.doc.status="draft";setDirty(true);drawRight();} };
+  if(g("d_conf"))  g("d_conf").onclick =()=>{ if(S.doc.status!=="confirmed"){pushUndo();S.doc.status="confirmed";setDirty(true);drawRight();} };
 }
 function bindList(){
   const fsearch=document.getElementById("fsearch"), fhide=document.getElementById("fhide");
@@ -458,7 +488,7 @@ function startTagEdit(f, box){
   box.appendChild(inp); inp.focus(); inp.select();
   let done=false;
   const commit=(save)=>{ if(done) return; done=true;
-    if(save){ f.label=inp.value.trim(); setDirty(true); }
+    if(save && inp.value.trim()!==(f.label||"")){ pushUndo(); f.label=inp.value.trim(); setDirty(true); }
     drawBoxes(); drawRight(); };
   inp.onmousedown=(e)=>e.stopPropagation();
   inp.onclick=(e)=>e.stopPropagation();
@@ -501,16 +531,16 @@ function editorHTML(f){
 function bindEditor(){
   const f=field(S.sel);
   const g=id=>document.getElementById(id);
+  ["e_label","e_ex","e_hint","e_fs"].forEach(id=>{ const el=g(id); if(el) el.onfocus=()=>pushUndo(); });
   g("e_label").oninput=e=>{ f.label=e.target.value; setDirty(true); drawBoxes(); };
   g("e_ex").oninput=e=>{ f.example=e.target.value; setDirty(true); drawBoxes(); };
   g("e_hint").oninput=e=>{ f.fill_hint=e.target.value; setDirty(true); };
   g("e_fs").oninput=e=>{ f.font_size=e.target.value===""?null:parseFloat(e.target.value); setDirty(true); drawBoxes(); };
   document.querySelectorAll("#right .tseg button").forEach(b=>{
-    b.onclick=()=>{ f.type=b.dataset.t; setDirty(true); drawBoxes(); drawRight(); };
+    b.onclick=()=>{ if(f.type!==b.dataset.t){ pushUndo(); f.type=b.dataset.t; setDirty(true); drawBoxes(); drawRight(); } };
   });
   g("e_close").onclick=()=>{ S.sel=null; render(); };
-  g("e_del").onclick=()=>{
-    S.doc.fields=S.doc.fields.filter(x=>x.id!==S.sel); S.sel=null; setDirty(true); render(); };
+  g("e_del").onclick=deleteSelected;
 }
 
 // ── drag / resize ────────────────────────────────────
@@ -518,14 +548,20 @@ function imgRect(){ return document.getElementById("pageimg").getBoundingClientR
 function startDragResize(e,f){
   if(e.button!==undefined && e.button!==0) return;
   e.preventDefault(); e.stopPropagation();
+  if(e.shiftKey){                              // shift+click = toggle multi-select
+    if(S.selSet.has(f.id)) S.selSet.delete(f.id); else S.selSet.add(f.id);
+    S.sel=null; drawBoxes(); drawRight(); return;
+  }
+  S.selSet.clear();                            // plain click = single select
   const handle=e.target.dataset.h;            // tl|br|undefined(move) — read before redraw
   const wasSel=(S.sel===f.id);
   S.sel=f.id;
   if(!wasSel){ drawBoxes(); }                 // 첫 클릭에 바로 핸들 표시(한 번 클릭으로 편집)
   drawRight();
   const r=imgRect(); const start=f.bbox_norm.slice();
-  const sx=e.clientX, sy=e.clientY;
+  const sx=e.clientX, sy=e.clientY; let moved=false;
   function mv(ev){
+    if(!moved){ pushUndo(); moved=true; }
     const dx=(ev.clientX-sx)/r.width, dy=(ev.clientY-sy)/r.height;
     let [x0,y0,x1,y1]=start;
     if(!handle){ x0+=dx;x1+=dx;y0+=dy;y1+=dy; }
@@ -551,33 +587,70 @@ function recomputePt(f){
 function r2(n){ return Math.round(n*100)/100; }
 
 // ── add mode ─────────────────────────────────────────
-document.getElementById("addbtn").onclick=()=>{
-  if(!S.doc) return;
-  S.mode = S.mode==="add"?"select":"add";
+function toggleAdd(on){
+  S.mode = on ? "add" : "select";
   document.getElementById("addbtn").classList.toggle("on",S.mode==="add");
   document.getElementById("stage").classList.toggle("adding",S.mode==="add");
-};
+}
+document.getElementById("addbtn").onclick=()=>{ if(S.doc) toggleAdd(S.mode!=="add"); };
 document.getElementById("stage").addEventListener("mousedown",function(e){
   if(S.mode!=="add"||e.target.classList.contains("box")||e.target.classList.contains("h")) return;
-  e.preventDefault();
+  e.preventDefault(); pushUndo();
   const r=imgRect(); const sx=(e.clientX-r.left)/r.width, sy=(e.clientY-r.top)/r.height;
   const nid="f"+(1+Math.max(0,...S.doc.fields.map(f=>parseInt(f.id.slice(1))||0)));
   const f={ id:nid, page:S.page, type:"text", label:"", fill_hint:"", example:"",
             font_size:10, context:"", value:null,
             bbox_norm:[r4(sx),r4(sy),r4(sx+0.01),r4(sy+0.01)],
             bbox_pt:[0,0,0,0], source:"manual", confidence:1.0 };
-  recomputePt(f); S.doc.fields.push(f); S.sel=nid; setDirty(true);
-  startDragResize({clientX:e.clientX,clientY:e.clientY,preventDefault(){},stopPropagation(){},
+  recomputePt(f); S.doc.fields.push(f); S.sel=nid; S.selSet.clear(); setDirty(true);
+  startDragResize({clientX:e.clientX,clientY:e.clientY,shiftKey:false,preventDefault(){},stopPropagation(){},
                    target:{dataset:{h:"br"}}}, f);
   drawBoxes(); drawRight();
-  S.mode="select"; document.getElementById("addbtn").classList.remove("on");
-  document.getElementById("stage").classList.remove("adding");
+  // stay in add mode for consecutive adds (Esc or the button exits)
 });
 
-// click empty area → deselect
-document.getElementById("stage").addEventListener("click",function(e){
-  if(e.target.id==="stage"||e.target.id==="pageimg"){ if(S.sel){S.sel=null;render();} }
-});
+// marquee multi-select on empty area; tiny drag = deselect
+(function(){
+  const stage=document.getElementById("stage"), band=document.getElementById("band");
+  let on=false, sx=0, sy=0;
+  stage.addEventListener("mousedown",e=>{
+    if(S.mode==="add"||e.button!==0) return;
+    const c=e.target.classList;
+    if(c.contains("box")||c.contains("h")||c.contains("tag")||c.contains("taginput")) return;
+    on=true; sx=e.clientX; sy=e.clientY;
+    band.style.display="block"; band.style.width=band.style.height="0px";
+    e.preventDefault();
+  });
+  window.addEventListener("mousemove",e=>{
+    if(!on) return;
+    const st=stage.getBoundingClientRect();
+    const x0=Math.min(sx,e.clientX),y0=Math.min(sy,e.clientY),x1=Math.max(sx,e.clientX),y1=Math.max(sy,e.clientY);
+    band.style.left=(x0-st.left)+"px"; band.style.top=(y0-st.top)+"px";
+    band.style.width=(x1-x0)+"px"; band.style.height=(y1-y0)+"px";
+  });
+  window.addEventListener("mouseup",e=>{
+    if(!on) return; on=false; band.style.display="none";
+    if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)<5){
+      if(S.sel||S.selSet.size){ S.sel=null; S.selSet.clear(); render(); } return;
+    }
+    const r=imgRect();
+    const nx0=(Math.min(sx,e.clientX)-r.left)/r.width, ny0=(Math.min(sy,e.clientY)-r.top)/r.height;
+    const nx1=(Math.max(sx,e.clientX)-r.left)/r.width, ny1=(Math.max(sy,e.clientY)-r.top)/r.height;
+    S.sel=null;
+    for(const f of pageFields()){ const [a,b2,c,d]=f.bbox_norm;
+      if(a<nx1&&c>nx0&&b2<ny1&&d>ny0) S.selSet.add(f.id); }
+    drawBoxes(); drawRight();
+  });
+})();
+function deleteSelected(){
+  if(!S.doc) return;
+  if(S.selSet.size){ pushUndo();
+    S.doc.fields=S.doc.fields.filter(x=>!S.selSet.has(x.id)); S.selSet.clear(); setDirty(true); render(); }
+  else if(S.sel){ pushUndo();
+    S.doc.fields=S.doc.fields.filter(x=>x.id!==S.sel); S.sel=null; setDirty(true); render(); }
+}
+document.getElementById("bulkdel").onclick=deleteSelected;
+document.getElementById("bulkclear").onclick=()=>{ S.selSet.clear(); render(); };
 // clear any stray text selection on non-input mousedown (avoids full-page highlight)
 document.addEventListener("mousedown",e=>{
   const t=e.target;
@@ -610,21 +683,44 @@ document.getElementById("export").onclick=async()=>{
 // nav
 document.getElementById("prev").onclick=()=>{ if(S.doc&&S.page>0){S.page--;S.sel=null;render();} };
 document.getElementById("next").onclick=()=>{ if(S.doc&&S.page<S.doc.page_count-1){S.page++;S.sel=null;render();} };
-// Cmd/Ctrl+S = save (works even while typing in an input)
+function nudge(key,big){
+  const f=field(S.sel); if(!f) return; pushUndo();
+  const s=big?0.01:0.002; let [x0,y0,x1,y1]=f.bbox_norm;
+  if(key==="ArrowLeft"){x0-=s;x1-=s;} else if(key==="ArrowRight"){x0+=s;x1+=s;}
+  else if(key==="ArrowUp"){y0-=s;y1-=s;} else if(key==="ArrowDown"){y0+=s;y1+=s;}
+  f.bbox_norm=[r4(x0),r4(y0),r4(x1),r4(y1)]; recomputePt(f); f.source="manual";
+  setDirty(true); drawBoxes(); drawRight();
+}
+function duplicateSelected(){
+  if(!S.doc||!S.sel) return; const f=field(S.sel); if(!f) return; pushUndo();
+  const nid="f"+(1+Math.max(0,...S.doc.fields.map(x=>parseInt(x.id.slice(1))||0)));
+  const c=JSON.parse(JSON.stringify(f)); c.id=nid; c.source="manual";
+  c.bbox_norm=c.bbox_norm.map((v,i)=>v+(i<2?0.012:0.012));
+  recomputePt(c); S.doc.fields.push(c); S.sel=nid; S.selSet.clear(); setDirty(true); render();
+}
+// Cmd/Ctrl shortcuts: S=save, Z=undo, Shift+Z/Y=redo, D=duplicate
 document.addEventListener("keydown",e=>{
-  if((e.metaKey||e.ctrlKey)&&(e.key==="s"||e.key==="S")){
-    e.preventDefault();
-    if(S.doc&&S.dirty) document.getElementById("save").click();
-  }
+  const mod=e.metaKey||e.ctrlKey;
+  const inField=/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)||e.target.isContentEditable;
+  if(!mod) return;
+  const k=e.key.toLowerCase();
+  if(k==="s"){ e.preventDefault(); if(S.doc&&S.dirty) document.getElementById("save").click(); }
+  else if(k==="z"&&!inField){ e.preventDefault(); e.shiftKey?doRedo():doUndo(); }
+  else if(k==="y"&&!inField){ e.preventDefault(); doRedo(); }
+  else if(k==="d"&&!inField){ e.preventDefault(); duplicateSelected(); }
 });
-// keys: Delete=remove, Esc=deselect
+// keys: Delete=remove (single or multi), Esc=deselect/exit add, arrows=nudge or page
 document.addEventListener("keydown",e=>{
-  if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT") return;
-  if(e.key==="Escape"&&S.sel){ S.sel=null; render(); }
-  if((e.key==="Delete"||e.key==="Backspace")&&S.sel){
-    S.doc.fields=S.doc.fields.filter(x=>x.id!==S.sel); S.sel=null; setDirty(true); render(); }
-  if(e.key==="ArrowLeft"&&S.doc&&S.page>0){ S.page--;S.sel=null;render(); }
-  if(e.key==="ArrowRight"&&S.doc&&S.page<S.doc.page_count-1){ S.page++;S.sel=null;render(); }
+  if(/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if(e.key==="Escape"){
+    if(S.mode==="add"){ toggleAdd(false); }
+    else if(S.sel||S.selSet.size){ S.sel=null; S.selSet.clear(); render(); }
+  } else if(e.key==="Delete"||e.key==="Backspace"){ e.preventDefault(); deleteSelected(); }
+  else if(e.key.startsWith("Arrow")){
+    if(S.sel){ e.preventDefault(); nudge(e.key,e.shiftKey); }
+    else if(e.key==="ArrowLeft"&&S.doc&&S.page>0){ S.page--;render(); }
+    else if(e.key==="ArrowRight"&&S.doc&&S.page<S.doc.page_count-1){ S.page++;render(); }
+  }
 });
 
 // ── live-reload: paused while dirty (avoid clobbering Claude Code edits) ──
