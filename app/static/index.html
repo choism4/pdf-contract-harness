@@ -31,13 +31,15 @@
   /* 중앙 */
   #main { flex:1; overflow:auto; padding:18px; display:flex;
           flex-direction:column; align-items:stretch; }
-  #toolbar { width:100%; display:flex; gap:8px; align-items:center;
-             margin-bottom:14px; color:var(--muted); flex-wrap:wrap; }
+  #toolbar { position:sticky; top:0; z-index:50; display:flex; gap:8px;
+             align-items:center; color:var(--muted); flex-wrap:wrap;
+             background:var(--bg); padding:10px 18px;
+             margin:-18px -18px 14px; border-bottom:1px solid var(--line); }
   #toolbar .title { color:var(--txt); font-weight:600; }
   #stage { position:relative; line-height:0; box-shadow:0 4px 24px #0008;
            background:#fff; user-select:none; touch-action:none; margin:0 auto; }
   #stage.adding { cursor:crosshair; }
-  #stage img { display:block; max-width:100%; height:auto; pointer-events:none; }
+  #stage img { display:block; width:100%; height:auto; pointer-events:none; }
   .box { position:absolute; border:2px solid var(--accent);
          background:rgba(224,72,61,.10); cursor:move; }
   .box[data-type="checkbox"] { border-color:var(--accent2); background:rgba(61,123,224,.12); }
@@ -155,13 +157,27 @@ function applyZoom(){
   document.getElementById("stage").style.width=(fitW*S.zoom)+"px";
   document.getElementById("zoomlbl").textContent=Math.round(S.zoom*100)+"%";
 }
-function setZoom(z){ S.zoom=Math.max(0.25,Math.min(5,Math.round(z*100)/100)); applyZoom(); }
-document.getElementById("zoomin").onclick=()=>setZoom(S.zoom+0.25);
-document.getElementById("zoomout").onclick=()=>setZoom(S.zoom-0.25);
+function setZoom(z, cx, cy){
+  const main=document.getElementById("main");
+  const old=S.zoom;
+  S.zoom=Math.max(0.25,Math.min(6,z));
+  // 커서 기준 줌: 포인터 아래 지점이 제자리 유지
+  if(cx!=null){
+    const r=main.getBoundingClientRect();
+    const px=main.scrollLeft+(cx-r.left), py=main.scrollTop+(cy-r.top);
+    const k=S.zoom/old;
+    applyZoom();
+    main.scrollLeft=px*k-(cx-r.left); main.scrollTop=py*k-(cy-r.top);
+  } else applyZoom();
+}
+document.getElementById("zoomin").onclick=()=>setZoom(S.zoom*1.25);
+document.getElementById("zoomout").onclick=()=>setZoom(S.zoom/1.25);
 document.getElementById("zoomlbl").onclick=()=>setZoom(1);
 document.getElementById("main").addEventListener("wheel",e=>{
-  if(!e.ctrlKey&&!e.metaKey) return;        // Ctrl/Cmd+휠 = 줌
-  e.preventDefault(); setZoom(S.zoom + (e.deltaY<0?0.15:-0.15));
+  if(!e.ctrlKey&&!e.metaKey) return;        // Ctrl/Cmd+휠 또는 트랙패드 핀치 = 줌
+  e.preventDefault();
+  const d=Math.max(-60,Math.min(60,e.deltaY));   // 노치 폭주 방지
+  setZoom(S.zoom*Math.exp(-d*0.0125), e.clientX, e.clientY);  // 곱셈(지수)=자연스런 핀치
 },{passive:false});
 window.addEventListener("resize",()=>{ if(S.zoom===1) applyZoom(); });
 
