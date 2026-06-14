@@ -8,8 +8,8 @@ export const RemotionRoot: React.FC = () => {
       component={HeroAnim}
       durationInFrames={DURATION}
       fps={FPS}
-      width={1280}
-      height={720}
+      width={1080}
+      height={1350}
     />
   );
 };
