@@ -94,17 +94,17 @@ const SHOTS: Shot[] = [
   { f: 0, cx: DW / 2, cy: 0.2 * DH, z: 1.4 },
   { f: HUD_T0, cx: DW / 2, cy: 0.2 * DH, z: 1.4 },
   { f: HUD_T1, cx: DW / 2, cy: 0.3 * DH, z: 2.4 },
-  { f: READ_S, cx: DW / 2, cy: 0.3 * DH, z: 2.6 },
-  { f: READ_E, cx: DW / 2, cy: 0.3 * DH, z: 2.6 },
-  { f: TOP_DROP - 4, cx: DW / 2, cy: 0.15 * DH, z: 2.8 },
-  { f: TOP_DROP + TOP.length * TOP_BEAT + 6, cx: DW / 2, cy: 0.15 * DH, z: 2.8 },
-  { f: BLOCK_DROP + 6, cx: 0.46 * DW, cy: 0.52 * DH, z: 2.35 },
-  { f: (BLOCK_DROP + LAST_DROP) / 2, cx: 0.5 * DW, cy: 0.62 * DH, z: 2.35 },
-  { f: LAST_DROP + 6, cx: 0.5 * DW, cy: 0.71 * DH, z: 2.35 },
-  { f: POINT_ZOOM, cx: tgtCx, cy: tgtCy, z: 3.1 },
-  { f: FIX_E + 6, cx: tgtCx, cy: tgtCy, z: 3.1 },
-  { f: OUT_S, cx: DW / 2, cy: 0.5 * DH, z: 1.28 },
-  { f: DURATION, cx: DW / 2, cy: 0.5 * DH, z: 1.24 },
+  { f: READ_S, cx: DW / 2, cy: 0.29 * DH, z: 3.1 },
+  { f: READ_E, cx: DW / 2, cy: 0.29 * DH, z: 3.1 },
+  { f: TOP_DROP - 4, cx: DW / 2, cy: 0.15 * DH, z: 3.3 },
+  { f: TOP_DROP + TOP.length * TOP_BEAT + 6, cx: DW / 2, cy: 0.15 * DH, z: 3.3 },
+  { f: BLOCK_DROP + 6, cx: 0.42 * DW, cy: 0.52 * DH, z: 2.8 },
+  { f: (BLOCK_DROP + LAST_DROP) / 2, cx: 0.5 * DW, cy: 0.62 * DH, z: 2.8 },
+  { f: LAST_DROP + 6, cx: 0.5 * DW, cy: 0.71 * DH, z: 2.8 },
+  { f: POINT_ZOOM, cx: tgtCx, cy: tgtCy, z: 3.7 },
+  { f: FIX_E + 6, cx: tgtCx, cy: tgtCy, z: 3.7 },
+  { f: OUT_S, cx: DW / 2, cy: 0.5 * DH, z: 1.5 },
+  { f: DURATION, cx: DW / 2, cy: 0.5 * DH, z: 1.46 },
 ];
 function camera(frame: number) {
   const fs = SHOTS.map((s) => s.f);
@@ -161,7 +161,7 @@ export const HeroAnim: React.FC = () => {
     w: interpolate(t, [0, 1], [940, 1000]),
     h: interpolate(t, [0, 1], [600, 452]),
   };
-  const termFont = interpolate(t, [0, 1], [31, 20]);
+  const termFont = interpolate(t, [0, 1], [33, 25]);
   const termLH = termFont * 1.42;
   // pop the terminal larger during the copy → paste beat so the JSON reads
   const focus = frame >= STREAM_S - 8 && frame <= FIX_E + 8
@@ -250,29 +250,22 @@ export const HeroAnim: React.FC = () => {
           return (
             <React.Fragment key={f.id}>
               <div style={{ position: "absolute", left: p.x, top: p.y, width: sw, height: sh, border: `${Math.max(2, cam.z)}px solid ${color}`, background: `${color}18`, borderRadius: 4, opacity: op, transform: `translateY(${ty}px) scale(${sc})`, transformOrigin: "center", boxShadow: `0 ${5 + (1 - sp) * 18}px ${10 + (1 - sp) * 26}px rgba(10,30,80,${0.05 + (1 - sp) * 0.14})` }} />
-              <div style={{ position: "absolute", left: p.x, top: p.y - 23, fontSize: 18, fontWeight: 700, color: "#fff", background: color, padding: "2px 9px", borderRadius: 7, opacity: labelOp, whiteSpace: "nowrap" }}>{f.label}</div>
+              <div style={{ position: "absolute", left: p.x, top: p.y - 31, fontSize: 25, fontWeight: 700, color: "#fff", background: color, padding: "3px 12px", borderRadius: 9, opacity: labelOp, whiteSpace: "nowrap" }}>{f.label}</div>
               {val && frame >= vs && (
-                <div style={{ position: "absolute", left: p.x + 6, top: p.y, height: sh, display: "flex", alignItems: "center", fontFamily: f.type === "signature" ? '"Snell Roundhand",cursive' : SANS, fontSize: f.type === "signature" ? Math.max(20, sh * 0.85) : Math.max(13, sh * 0.62), fontStyle: f.type === "signature" ? "italic" : "normal", fontWeight: f.type === "signature" ? 600 : 500, color: "#0b57b2", whiteSpace: "nowrap" }}>{val.slice(0, vChars)}</div>
+                <div style={{ position: "absolute", left: p.x + 8, top: p.y, height: sh, display: "flex", alignItems: "center", fontFamily: f.type === "signature" ? '"Snell Roundhand",cursive' : SANS, fontSize: f.type === "signature" ? Math.max(26, sh * 0.85) : Math.max(17, sh * 0.62), fontStyle: f.type === "signature" ? "italic" : "normal", fontWeight: f.type === "signature" ? 600 : 500, color: "#0b57b2", whiteSpace: "nowrap" }}>{val.slice(0, vChars)}</div>
               )}
             </React.Fragment>
           );
         })}
-
-      {/* Confirmed pill */}
-      {frame >= CONFIRM_AT && docVisible && (() => {
-        const sp = spring({ frame: frame - CONFIRM_AT, fps, config: { damping: 12, stiffness: 200 } });
-        const o = proj(8, 12);
-        return <div style={{ position: "absolute", left: o.x, top: o.y, transform: `scale(${interpolate(sp, [0, 1], [0.5, 1])})`, transformOrigin: "left top", background: "#16a34a", color: "#fff", fontSize: 21, fontWeight: 700, padding: "8px 18px", borderRadius: 999, boxShadow: "0 12px 30px rgba(22,163,74,.45)" }}>✓ Confirmed → export.json</div>;
-      })()}
 
       {/* context menu */}
       {menuVis && (() => {
         const items = ["Add field here", "Copy location  ⌘C", "Copy field info", "Delete"];
         const hi = frame >= COPY_CLICK - 14 ? 1 : -1;
         return (
-          <div style={{ position: "absolute", left: tgtPt.x + 8, top: tgtPt.y + 8, transform: `scale(${interpolate(menuSp, [0, 1], [0.7, 1])})`, transformOrigin: "left top", background: "rgba(255,255,255,.98)", borderRadius: 15, boxShadow: "0 24px 60px rgba(0,0,0,.3)", border: "1px solid #e3e5ea", padding: 8, width: 300, fontSize: 20 }}>
+          <div style={{ position: "absolute", left: tgtPt.x + 8, top: tgtPt.y + 8, transform: `scale(${interpolate(menuSp, [0, 1], [0.7, 1])})`, transformOrigin: "left top", background: "rgba(255,255,255,.98)", borderRadius: 18, boxShadow: "0 24px 60px rgba(0,0,0,.32)", border: "1px solid #e3e5ea", padding: 10, width: 380, fontSize: 26 }}>
             {items.map((it, i) => (
-              <div key={i} style={{ padding: "11px 16px", borderRadius: 10, color: i === hi ? "#fff" : i === 3 ? "#d23" : "#1d1d1f", background: i === hi ? "#0a66d6" : "transparent", fontWeight: i === hi ? 600 : 400 }}>{it}</div>
+              <div key={i} style={{ padding: "14px 20px", borderRadius: 12, color: i === hi ? "#fff" : i === 3 ? "#d23" : "#1d1d1f", background: i === hi ? "#0a66d6" : "transparent", fontWeight: i === hi ? 600 : 400 }}>{it}</div>
             ))}
           </div>
         );
@@ -290,8 +283,8 @@ export const HeroAnim: React.FC = () => {
       {/* callout */}
       {calloutVis && (
         <div style={{ position: "absolute", left: tgtPt.x - 330, top: tgtPt.y - 92, transform: `scale(${interpolate(calloutSp, [0, 1], [0.4, 1])})`, transformOrigin: "right bottom", opacity: calloutOut }}>
-          <div style={{ background: "#1d1d1f", color: "#fff", fontSize: 26, fontWeight: 700, padding: "13px 24px", borderRadius: 18, boxShadow: "0 16px 40px rgba(0,0,0,.34)", whiteSpace: "nowrap" }}>Fix this one ✦</div>
-          <div style={{ position: "absolute", right: 30, bottom: -9, width: 20, height: 20, background: "#1d1d1f", transform: "rotate(45deg)", borderRadius: 4 }} />
+          <div style={{ background: "#1d1d1f", color: "#fff", fontSize: 34, fontWeight: 700, padding: "16px 30px", borderRadius: 20, boxShadow: "0 18px 44px rgba(0,0,0,.36)", whiteSpace: "nowrap" }}>Fix this one ✦</div>
+          <div style={{ position: "absolute", right: 36, bottom: -10, width: 24, height: 24, background: "#1d1d1f", transform: "rotate(45deg)", borderRadius: 5 }} />
         </div>
       )}
 
@@ -346,7 +339,28 @@ export const HeroAnim: React.FC = () => {
       {/* caption */}
       {(() => {
         const op = kf(frame, [CAP_AT, CAP_AT + 12], [0, 1]);
-        return <div style={{ position: "absolute", left: 44, top: 96, opacity: op, fontSize: 30, fontWeight: 700, color: "#1d1d1f", lineHeight: "38px" }}>Pinpoint every field.<br /><span style={{ color: "#0a66d6" }}>Export exact coordinates.</span></div>;
+        return <div style={{ position: "absolute", left: 44, top: 96, opacity: op, fontSize: 34, fontWeight: 700, color: "#1d1d1f", lineHeight: "44px" }}>Pinpoint every field.<br /><span style={{ color: "#0a66d6" }}>Export exact coordinates.</span></div>;
+      })()}
+
+      {/* Confirmed — BIG, dead center, above everything */}
+      {frame >= CONFIRM_AT && (() => {
+        const sp = spring({ frame: frame - CONFIRM_AT, fps, config: { damping: 13, stiffness: 180 } });
+        const scrim = kf(frame, [CONFIRM_AT, CONFIRM_AT + 10], [0, 0.82]);
+        const ckSp = spring({ frame: frame - CONFIRM_AT - 4, fps, config: { damping: 10, stiffness: 200 } });
+        return (
+          <>
+            <AbsoluteFill style={{ background: "#0a0b0d", opacity: scrim }} />
+            <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
+              <div style={{ transform: `scale(${interpolate(sp, [0, 1], [0.6, 1])})`, opacity: kf(frame, [CONFIRM_AT, CONFIRM_AT + 6], [0, 1]), display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <div style={{ width: 240, height: 240, borderRadius: 999, background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 30px 90px rgba(22,163,74,.6)", transform: `scale(${interpolate(ckSp, [0, 1], [0.7, 1])})` }}>
+                  <svg width="140" height="140" viewBox="0 0 24 24" fill="none"><path d="M4 12.5 L10 18.5 L20 6" stroke="#fff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                </div>
+                <div style={{ marginTop: 46, fontSize: 92, fontWeight: 800, color: "#fff", letterSpacing: -1.5 }}>Confirmed</div>
+                <div style={{ marginTop: 16, fontSize: 42, fontFamily: MONO, color: "#9aa4b2" }}>→ export.json</div>
+              </div>
+            </AbsoluteFill>
+          </>
+        );
       })()}
     </AbsoluteFill>
   );
