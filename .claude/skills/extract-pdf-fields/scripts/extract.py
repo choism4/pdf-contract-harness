@@ -113,9 +113,13 @@ def label_left_of(rows, x0, cy):
     return label, row["text"].strip()
 
 
+VERT_MIN_H = 8.0     # pt: 세로선으로 칠 최소 높이
+VERT_MAX_W = 3.0     # pt: 세로선으로 칠 최대 폭
+
+
 def extract_paths(page, page_h):
-    """벡터 PATH → 밑줄/체크박스 후보. 좌상단 원점 pt."""
-    underlines, checkboxes = [], []
+    """벡터 PATH → 가로 밑줄 / 세로선 / 체크박스 후보. 좌상단 원점 pt."""
+    underlines, verticals, checkboxes = [], [], []
     for obj in page.get_objects():
         if obj.type != praw.FPDF_PAGEOBJ_PATH:
             continue
@@ -128,10 +132,32 @@ def extract_paths(page, page_h):
         y0, y1 = page_h - t, page_h - b
         if w >= UNDERLINE_MIN_W and h <= UNDERLINE_MAX_H:
             underlines.append((x0, y0, x1, y1))
+        elif h >= VERT_MIN_H and w <= VERT_MAX_W:
+            verticals.append((x0, y0, x1, y1))
         elif CHECKBOX_MIN <= w <= CHECKBOX_MAX and CHECKBOX_MIN <= h <= CHECKBOX_MAX \
                 and abs(w - h) <= CHECKBOX_RATIO * max(w, h):
             checkboxes.append((x0, y0, x1, y1))
-    return underlines, checkboxes
+    return underlines, verticals, checkboxes
+
+
+def drop_table_borders(horizontals, verticals):
+    """표 격자선(셀 테두리)인 가로선 제외. 작성 밑줄(라벨 뒤 빈 선)만 남긴다.
+    제외 조건: ⓐ세로선이 가로선 '내부'를 관통, 또는 ⓑ양끝 모두에 세로선(닫힌 셀).
+    반환: (남은 가로선, 제외 개수)."""
+    PAD, GAP, TOL = 4.0, 4.0, 3.0
+    vs = [((v[0] + v[2]) / 2, min(v[1], v[3]), max(v[1], v[3])) for v in verticals]
+    kept, dropped = [], 0
+    for hx0, hy0, hx1, hy1 in horizontals:
+        hy = (hy0 + hy1) / 2
+        def vcross(lo, hi):   # 세로선 중 x가 [lo,hi]이고 가로선 y를 지나는 것
+            return any(lo <= vx <= hi and vy0 - TOL <= hy <= vy1 + TOL for vx, vy0, vy1 in vs)
+        interior = vcross(hx0 + PAD, hx1 - PAD)
+        both_ends = vcross(hx0 - GAP, hx0 + GAP) and vcross(hx1 - GAP, hx1 + GAP)
+        if interior or both_ends:
+            dropped += 1
+        else:
+            kept.append((hx0, hy0, hx1, hy1))
+    return kept, dropped
 
 
 def extract_underscore_blanks(rows):
@@ -232,6 +258,8 @@ def main():
     ap.add_argument("--overlay", action="store_true")
     ap.add_argument("--checkboxes", action="store_true",
                     help="실험적 체크박스 탐지(Phase 6, 기본 off — 글리프 오검출 많음)")
+    ap.add_argument("--keep-table-lines", action="store_true",
+                    help="표 격자선 필터 끄기(기본은 격자선 제외)")
     args = ap.parse_args()
 
     pdir = resolve_dir(args.subject)
@@ -241,6 +269,7 @@ def main():
 
     pages_meta, fields = [], []
     fid = 0
+    dropped_total = 0
     for pi in range(len(doc)):
         page = doc[pi]
         pw, ph = page.get_size()
@@ -257,7 +286,10 @@ def main():
 
         chars = collect_chars(page, ph)
         rows = group_rows(chars)
-        underlines, checkboxes = extract_paths(page, ph)
+        underlines, verticals, checkboxes = extract_paths(page, ph)
+        if not args.keep_table_lines:
+            underlines, ndrop = drop_table_borders(underlines, verticals)
+            dropped_total += ndrop
         underlines = merge_segments(underlines)        # 쪼개진 밑줄 합치기
         us_blanks = extract_underscore_blanks(rows)
 
@@ -297,7 +329,8 @@ def main():
     by_type = {}
     for f in fields:
         by_type[f["type"]] = by_type.get(f["type"], 0) + 1
-    print(f"[extract] {subject}: {len(fields)} fields {by_type} → fields.json")
+    note = f" (표 격자선 {dropped_total}개 제외)" if dropped_total else ""
+    print(f"[extract] {subject}: {len(fields)} fields {by_type}{note} → fields.json")
     if args.overlay:
         print(f"[extract] overlay → page-N.overlay.png")
 
