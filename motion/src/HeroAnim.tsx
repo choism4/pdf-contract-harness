@@ -302,26 +302,44 @@ export const HeroAnim: React.FC = () => {
       )}
 
       {/* terminal (extreme-zoom intro → hero → hud) */}
-      <div style={{ position: "absolute", left: term.x, top: term.y, width: term.w, height: term.h, background: "rgba(12,13,16,.97)", borderRadius: 20, border: "1px solid #20232b", boxShadow: "0 40px 90px rgba(0,0,0,.5)", overflow: "hidden", transform: `scale(${termZoom * focus})`, transformOrigin: t < 0.5 ? "60px 92px" : "center bottom" }}>
+      <div style={{ position: "absolute", left: term.x, top: term.y, width: term.w, height: term.h, background: "rgba(12,13,16,.97)", borderRadius: 20, border: "1px solid #20232b", boxShadow: "0 40px 90px rgba(0,0,0,.5)", overflow: "hidden", transform: `scale(${termZoom * focus})`, transformOrigin: t < 0.5 ? "130px 230px" : "center bottom" }}>
         <div style={{ height: 48, display: "flex", alignItems: "center", paddingLeft: 22, gap: 10, borderBottom: "1px solid #1b1e25" }}>
           {["#ff5f57", "#febc2e", "#28c840"].map((c) => <div key={c} style={{ width: 15, height: 15, borderRadius: 8, background: c }} />)}
           <div style={{ color: "#6b7280", fontSize: 17, fontFamily: MONO, marginLeft: 14 }}>claude-code — employment-contract</div>
         </div>
-        <div style={{ padding: "18px 24px", fontFamily: MONO, fontSize: termFont, lineHeight: `${termLH}px`, color: "#e6e8ec" }}>
-          <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-            <span style={{ color: "#9aa4b2" }}>❯ </span>{slice(CMD_PLAIN, cmdChars)}{cmdTyping && <span style={{ opacity: caretOn ? 1 : 0 }}>▋</span>}
-          </div>
-          {hud("⏺ reading source.pdf · text layer", READ_S - 6, frame, "#c6cbd4")}
-          {hud("⏺ 68 vector paths → 16 fields", READ_E - 4, frame, "#c6cbd4")}
-          {frame >= STREAM_S && <div style={{ marginTop: 9, color: "#8ab4ff", whiteSpace: "pre-wrap" }}>{COPY_TEXT.slice(0, streamChars)}</div>}
-          {frame >= PASTE_S && (
-            <div style={{ marginTop: 9, whiteSpace: "pre-wrap" }}>
-              <span style={{ color: "#9aa4b2" }}>❯ </span>{slice(PASTE_PLAIN, pasteChars)}{pasteTyping && <span style={{ opacity: caretOn ? 1 : 0 }}>▋</span>}
+        <div style={{ position: "relative", fontFamily: MONO, color: "#e6e8ec" }}>
+          {/* SPLASH — real Claude Code welcome (hero) */}
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "22px 28px", opacity: 1 - t, pointerEvents: "none" }}>
+            <div style={{ display: "flex", gap: 22, alignItems: "flex-start" }}>
+              <pre style={{ margin: 0, color: "#d97757", fontSize: termFont * 0.92, lineHeight: `${termFont * 1.0}px`, fontWeight: 700 }}>{` ▐▛███▜▌\n▝▜█████▛▘\n  ▘▘ ▝▝`}</pre>
+              <div style={{ fontSize: termFont * 0.72, lineHeight: `${termFont * 1.0}px`, paddingTop: 2 }}>
+                <div><span style={{ fontWeight: 700 }}>Claude Code</span> <span style={{ color: "#7d828c" }}>v2.1.177</span></div>
+                <div style={{ color: "#c6cbd4", marginTop: 4 }}>Opus 4.8 (1M context) · Claude Max</div>
+                <div style={{ color: "#7d828c", marginTop: 4 }}>~/src/pdf-contract-writer</div>
+              </div>
             </div>
-          )}
-          {frame >= PASTE_BBOX_AT && <div style={{ color: "#6ee7b7" }}>{PASTE_BBOX}</div>}
-          {hud(`✎ ${TARGET.label} — snapped ✓`, FIX_S + 4, frame, "#febc2e")}
-          {hud(`⏺ confirmed · wrote export.json`, CONFIRM_AT - 4, frame, "#28c840", true)}
+            <div style={{ marginTop: 26, border: "1px solid #2c2f38", borderRadius: 14, padding: "16px 18px", fontSize: termFont, lineHeight: `${termLH}px`, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+              <span style={{ color: "#9aa4b2" }}>❯ </span>{slice(CMD_PLAIN, cmdChars)}{cmdTyping && <span style={{ opacity: caretOn ? 1 : 0 }}>▋</span>}
+            </div>
+          </div>
+
+          {/* LOG — after the doc appears (hud) */}
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, padding: "18px 24px", opacity: t, fontSize: termFont, lineHeight: `${termLH}px` }}>
+            <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+              <span style={{ color: "#9aa4b2" }}>❯ </span>{CMD_PLAIN}
+            </div>
+            {hud("⏺ reading source.pdf · text layer", READ_S - 6, frame, "#c6cbd4")}
+            {hud("⏺ 68 vector paths → 16 fields", READ_E - 4, frame, "#c6cbd4")}
+            {frame >= STREAM_S && <div style={{ marginTop: 9, color: "#8ab4ff", whiteSpace: "pre-wrap" }}>{COPY_TEXT.slice(0, streamChars)}</div>}
+            {frame >= PASTE_S && (
+              <div style={{ marginTop: 9, whiteSpace: "pre-wrap" }}>
+                <span style={{ color: "#9aa4b2" }}>❯ </span>{slice(PASTE_PLAIN, pasteChars)}{pasteTyping && <span style={{ opacity: caretOn ? 1 : 0 }}>▋</span>}
+              </div>
+            )}
+            {frame >= PASTE_BBOX_AT && <div style={{ color: "#6ee7b7" }}>{PASTE_BBOX}</div>}
+            {hud(`✎ ${TARGET.label} — snapped ✓`, FIX_S + 4, frame, "#febc2e")}
+            {hud(`⏺ confirmed · wrote export.json`, CONFIRM_AT - 4, frame, "#28c840", true)}
+          </div>
         </div>
       </div>
 
