@@ -20,11 +20,9 @@ ROOT = Path(__file__).resolve().parent.parent
 PROJECTS = ROOT / "projects"
 
 
-def build_export(doc: dict, include_all: bool = False) -> dict:
-    """fields.json dict → export.json dict. 기본 confirmed 필드만."""
+def build_export(doc: dict, include_all: bool = True) -> dict:
+    """fields.json dict → export.json dict. 모든 필드 내보냄(상태는 계약서 단위)."""
     fields = doc.get("fields", [])
-    if not include_all:
-        fields = [f for f in fields if f.get("status") == "confirmed"]
     out_fields = []
     for f in fields:
         out_fields.append({
@@ -42,6 +40,7 @@ def build_export(doc: dict, include_all: bool = False) -> dict:
     return {
         "subject": doc.get("subject"),
         "source": doc.get("source", "source.pdf"),
+        "status": doc.get("status", "draft"),
         "coordinate_system": "top-left origin; bbox_pt in PDF points, bbox_norm in 0..1 of page",
         "page_count": doc.get("page_count"),
         "pages": doc.get("pages", []),
@@ -66,14 +65,10 @@ def export_subject(subject: str, include_all: bool = False) -> dict:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("subject")
-    ap.add_argument("--all", action="store_true",
-                    help="draft 포함(기본은 status:confirmed 만)")
     args = ap.parse_args()
-    exp = export_subject(args.subject, args.all)
-    print(f"[export] {args.subject}: {exp['field_count']} fields → export.json")
-    if exp["field_count"] == 0:
-        print("[export] 경고: confirmed 필드 0개. --all 로 draft 포함 가능.",
-              file=sys.stderr)
+    exp = export_subject(args.subject)
+    print(f"[export] {args.subject}: {exp['field_count']} fields "
+          f"(status={exp['status']}) → export.json")
 
 
 if __name__ == "__main__":

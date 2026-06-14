@@ -28,6 +28,8 @@ CHECKBOX_MIN    = 5.0    # pt: 정사각 박스 한 변 최소
 CHECKBOX_MAX    = 18.0   # pt: 정사각 박스 한 변 최대
 CHECKBOX_RATIO  = 0.35   # 정사각 판정(가로세로 비율 차)
 ROW_TOL         = 4.0    # pt: 같은 행으로 묶을 y 허용오차
+MERGE_X_GAP     = 10.0   # pt: 같은 줄에서 이만큼 이내로 붙은 선분은 한 필드로 병합
+SIG_KW          = ("서명", "(인)", "（인）", "날인", "(서명)", "서 명")  # 서명/날인 자리
 
 
 def resolve_dir(arg):
@@ -107,6 +109,7 @@ def label_left_of(rows, x0, cy):
             break
     if not label and left:
         label = left.split()[-1] if left.split() else left
+    label = label.strip(" \"'“”‘’():：·.[]　")   # 따옴표/괄호/구두점 제거
     return label, row["text"].strip()
 
 
@@ -153,6 +156,30 @@ def extract_underscore_blanks(rows):
     return out
 
 
+def merge_segments(boxes):
+    """같은 줄(y중심 ROW_TOL)에서 x로 인접(gap<=MERGE_X_GAP)한 선분들을 1개로 병합.
+    PDF가 긴 밑줄을 여러 조각으로 그려서 쪼개지는 문제 해결."""
+    if not boxes:
+        return []
+    items = sorted(boxes, key=lambda b: ((b[1] + b[3]) / 2, b[0]))
+    merged = []
+    for b in items:
+        cy = (b[1] + b[3]) / 2
+        if merged:
+            m = merged[-1]
+            mcy = (m[1] + m[3]) / 2
+            if abs(mcy - cy) <= ROW_TOL and b[0] - m[2] <= MERGE_X_GAP:
+                merged[-1] = (m[0], min(m[1], b[1]), max(m[2], b[2]), max(m[3], b[3]))
+                continue
+        merged.append(tuple(b))
+    return merged
+
+
+def field_type(row_text):
+    """행 텍스트에 서명/날인 키워드 있으면 signature, 아니면 text."""
+    return "signature" if any(k in (row_text or "") for k in SIG_KW) else "text"
+
+
 def fill_box(bbox):
     """밑줄/underscore bbox를 '쓰는 공간' 사각형으로: 선을 바닥에 두고 위로 FILL_H."""
     x0, y0, y1 = bbox[0], bbox[1], bbox[3]
@@ -178,7 +205,6 @@ def mk_field(fid, page_idx, ftype, bbox, pw, ph, source, label="", row_text=""):
                       round(x1 / pw, 4), round(y1 / ph, 4)],
         "source": source,             # vector | underscore | checkbox | manual
         "confidence": 0.9 if source != "checkbox" else 0.6,
-        "status": "draft",            # draft | confirmed
     }
 
 
@@ -186,8 +212,8 @@ def draw_overlay(page, scale, fields, out_path, page_h):
     from PIL import ImageDraw
     img = page.render(scale=scale).to_pil().convert("RGB")
     dr = ImageDraw.Draw(img)
-    color = {"underline": (255, 0, 0), "underscore_blank": (255, 0, 0),
-             "checkbox": (0, 120, 255), "signature_seal": (200, 0, 200)}
+    color = {"text": (255, 0, 0), "checkbox": (0, 120, 255),
+             "signature": (200, 0, 200)}
     for f in fields:
         x0, y0, x1, y1 = f["bbox_pt"]
         c = color.get(f["type"], (0, 160, 0))
@@ -232,18 +258,19 @@ def main():
         chars = collect_chars(page, ph)
         rows = group_rows(chars)
         underlines, checkboxes = extract_paths(page, ph)
+        underlines = merge_segments(underlines)        # 쪼개진 밑줄 합치기
         us_blanks = extract_underscore_blanks(rows)
 
         page_fields = []
         for bbox in underlines:
             lbl, rt = label_left_of(rows, bbox[0], (bbox[1] + bbox[3]) / 2)
             fid += 1
-            page_fields.append(mk_field(f"f{fid}", pi, "underline", fill_box(bbox),
+            page_fields.append(mk_field(f"f{fid}", pi, field_type(rt), fill_box(bbox),
                                         pw, ph, "vector", lbl, rt))
         for bbox in us_blanks:
             lbl, rt = label_left_of(rows, bbox[0], (bbox[1] + bbox[3]) / 2)
             fid += 1
-            page_fields.append(mk_field(f"f{fid}", pi, "underscore_blank", fill_box(bbox),
+            page_fields.append(mk_field(f"f{fid}", pi, field_type(rt), fill_box(bbox),
                                         pw, ph, "underscore", lbl, rt))
         if args.checkboxes:
             for bbox in checkboxes:
@@ -259,6 +286,7 @@ def main():
     out = {
         "subject": subject,
         "source": "source.pdf",
+        "status": "draft",            # 계약서 단위 상태: draft | confirmed
         "page_count": len(doc),
         "pages": pages_meta,
         "fields": fields,

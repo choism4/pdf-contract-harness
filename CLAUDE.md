@@ -80,7 +80,13 @@ pdf-contract-writer/
 
 ## 작성 항목 타입 (`type`)
 
-`underline` · `underscore_blank` · `checkbox` · `table_cell` · `signature_seal`
+**3종만:** `text`(빈칸·밑줄·underscore 통합) · `checkbox` · `signature`(서명/날인).
+밑줄/underscore는 모두 `text`. 서명/날인 키워드 있는 줄은 자동 `signature`.
+
+## 상태 (`status`)
+
+**계약서 단위로만** 둔다 (fields.json 최상위 `status: "draft" | "confirmed"`).
+필드별 status는 없다 — 필드는 위치/의미만 가진다.
 
 ---
 
@@ -91,6 +97,7 @@ pdf-contract-writer/
 {
   "subject": "보조출연자-근로계약",
   "source": "source.pdf",
+  "status": "draft",             // 계약서 단위: draft | confirmed
   "page_count": 1,
   "pages": [
     { "index": 0, "size_pt": [595.0, 841.0],
@@ -100,7 +107,7 @@ pdf-contract-writer/
     {
       "id": "f1",
       "page": 0,
-      "type": "underline",
+      "type": "text",            // text | checkbox | signature
       "label": "이름",
       "fill_hint": "출연자 성명",
       "example": "홍길동",
@@ -109,15 +116,14 @@ pdf-contract-writer/
       "bbox_pt":   [88.6, 200.6, 131.8, 214.6],
       "bbox_norm": [0.149, 0.238, 0.221, 0.255],
       "source": "vector",        // vector | underscore | checkbox | manual
-      "confidence": 0.9,
-      "status": "draft"          // draft | confirmed
+      "confidence": 0.9
     }
   ]
 }
 ```
 
 ### export.json (확정본)
-`status: "confirmed"`인 필드만. 스키마는 fields.json과 동일(내부 플래그 유지). 다운스트림 Claude가 `label` + `bbox_*` + `fill_hint`로 채운다.
+모든 필드 + 계약서 `status`. 다운스트림 Claude가 `label` + `bbox_*` + `fill_hint` + `example` + `font_size`로 채운다.
 
 ---
 
