@@ -206,6 +206,23 @@ def field_type(row_text):
     return "signature" if any(k in (row_text or "") for k in SIG_KW) else "text"
 
 
+def row_font(rows, cy):
+    """필드 y에 가장 가까운 텍스트 행의 글자 높이로 본문 폰트(pt) 추정.
+    채울 글자가 주변 본문과 같은 크기로 보이도록. 없으면 None."""
+    best, bd = None, 1e9
+    for r in rows:
+        d = abs(r["cy"] - cy)
+        if d < bd:
+            bd, best = d, r
+    if not best or bd > 14:
+        return None
+    hs = sorted(abs(c["y1"] - c["y0"]) for c in best["chars"] if c["c"].strip())
+    if not hs:
+        return None
+    med = hs[len(hs) // 2]
+    return round(max(7.0, min(16.0, med / 0.72)), 1)
+
+
 def fill_box(bbox):
     """밑줄/underscore bbox를 '쓰는 공간' 사각형으로: 선을 바닥에 두고 위로 FILL_H."""
     x0, y0, y1 = bbox[0], bbox[1], bbox[3]
@@ -213,7 +230,7 @@ def fill_box(bbox):
     return (bbox[0], bottom - FILL_H, bbox[2], bottom)
 
 
-def mk_field(fid, page_idx, ftype, bbox, pw, ph, source, label="", row_text=""):
+def mk_field(fid, page_idx, ftype, bbox, pw, ph, source, label="", row_text="", font_size=None):
     x0, y0, x1, y1 = bbox
     h = abs(y1 - y0)
     return {
@@ -223,7 +240,8 @@ def mk_field(fid, page_idx, ftype, bbox, pw, ph, source, label="", row_text=""):
         "label": label,
         "fill_hint": "",               # 설명: 무엇을 써야 하는지 (예: "출연자 성명")
         "example": "",                 # 예시값: 이런 값이 들어간다 (예: "홍길동")
-        "font_size": round(h * 0.72, 1),  # 채울 글자 크기(pt), 박스 높이 기준 기본값
+        # 채울 글자 크기(pt): 주변 본문 크기 우선, 없으면 박스 높이 기준
+        "font_size": font_size if font_size is not None else round(h * 0.72, 1),
         "context": row_text,           # Claude가 라벨링할 때 참고할 행 전체 텍스트
         "value": None,
         "bbox_pt": [round(x0, 2), round(y0, 2), round(x1, 2), round(y1, 2)],
@@ -295,15 +313,17 @@ def main():
 
         page_fields = []
         for bbox in underlines:
-            lbl, rt = label_left_of(rows, bbox[0], (bbox[1] + bbox[3]) / 2)
+            cy = (bbox[1] + bbox[3]) / 2
+            lbl, rt = label_left_of(rows, bbox[0], cy)
             fid += 1
             page_fields.append(mk_field(f"f{fid}", pi, field_type(rt), fill_box(bbox),
-                                        pw, ph, "vector", lbl, rt))
+                                        pw, ph, "vector", lbl, rt, row_font(rows, cy)))
         for bbox in us_blanks:
-            lbl, rt = label_left_of(rows, bbox[0], (bbox[1] + bbox[3]) / 2)
+            cy = (bbox[1] + bbox[3]) / 2
+            lbl, rt = label_left_of(rows, bbox[0], cy)
             fid += 1
             page_fields.append(mk_field(f"f{fid}", pi, field_type(rt), fill_box(bbox),
-                                        pw, ph, "underscore", lbl, rt))
+                                        pw, ph, "underscore", lbl, rt, row_font(rows, cy)))
         if args.checkboxes:
             for bbox in checkboxes:
                 fid += 1
