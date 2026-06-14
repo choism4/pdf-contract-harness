@@ -623,10 +623,10 @@ function editorHTML(f){
         ${TYPES.map(t=>`<button data-t="${t.v}" class="${t.v===f.type?"on":""}"><span class="ic">${t.ic}</span>${t.label}</button>`).join("")}
       </div></div></div>
       <div class="prow col"><span class="k">Coordinates <span style="font-weight:400">(pt)</span></span><div class="v"><div class="coord">
-        <div class="c"><label>X</label><input value="${co(x0)}" readonly></div>
-        <div class="c"><label>Y</label><input value="${co(y0)}" readonly></div>
-        <div class="c"><label>W</label><input value="${co(x1-x0)}" readonly></div>
-        <div class="c"><label>H</label><input value="${co(y1-y0)}" readonly></div>
+        <div class="c"><label>X</label><input id="e_x" type="number" step="0.5" value="${co(x0)}"></div>
+        <div class="c"><label>Y</label><input id="e_y" type="number" step="0.5" value="${co(y0)}"></div>
+        <div class="c"><label>W</label><input id="e_w" type="number" step="0.5" min="1" value="${co(x1-x0)}"></div>
+        <div class="c"><label>H</label><input id="e_h" type="number" step="0.5" min="1" value="${co(y1-y0)}"></div>
       </div></div></div>
       <button id="e_del" class="delbtn">Delete field</button>
       <div class="empty" style="text-align:left;padding:10px 2px 0;font-size:11px">source: ${f.source} · drag the box / corners to move &amp; resize</div>
@@ -640,6 +640,17 @@ function bindEditor(){
   g("e_ex").oninput=e=>{ f.example=e.target.value; setDirty(true); drawBoxes(); };
   g("e_hint").oninput=e=>{ f.fill_hint=e.target.value; setDirty(true); };
   g("e_fs").oninput=e=>{ f.font_size=e.target.value===""?null:parseFloat(e.target.value); setDirty(true); drawBoxes(); };
+  const coordIds=["e_x","e_y","e_w","e_h"];
+  coordIds.forEach(id=>{ const el=g(id); if(el) el.onfocus=()=>pushUndo(); });
+  const applyCoord=()=>{
+    const x=parseFloat(g("e_x").value), y=parseFloat(g("e_y").value);
+    let w=parseFloat(g("e_w").value), h=parseFloat(g("e_h").value);
+    if([x,y,w,h].some(v=>isNaN(v))) return;
+    w=Math.max(1,w); h=Math.max(1,h);
+    f.bbox_pt=[r2(x),r2(y),r2(x+w),r2(y+h)];
+    recomputeNorm(f); f.source="manual"; setDirty(true); drawBoxes();
+  };
+  coordIds.forEach(id=>{ const el=g(id); if(el) el.oninput=applyCoord; });
   document.querySelectorAll("#right .tseg button").forEach(b=>{
     b.onclick=()=>{ if(f.type!==b.dataset.t){ pushUndo(); f.type=b.dataset.t; setDirty(true); drawBoxes(); drawRight(); } };
   });
@@ -687,6 +698,11 @@ function recomputePt(f){
   const m=pageMeta(); if(!m) return;
   const [w,h]=m.size_pt; const [x0,y0,x1,y1]=f.bbox_norm;
   f.bbox_pt=[r2(x0*w),r2(y0*h),r2(x1*w),r2(y1*h)];
+}
+function recomputeNorm(f){
+  const m=pageMeta(); if(!m) return;
+  const [w,h]=m.size_pt; const [x0,y0,x1,y1]=f.bbox_pt;
+  f.bbox_norm=[r4(x0/w),r4(y0/h),r4(x1/w),r4(y1/h)];
 }
 function r2(n){ return Math.round(n*100)/100; }
 

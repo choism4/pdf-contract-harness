@@ -13,3 +13,5 @@ projects/*/
 # Generated page renders are never committed (regenerated from source.pdf)
 projects/**/page-*.png
 projects/**/*.overlay.png
+# …except the bundled sample's render, so the demo works on first clone
+!projects/sample-employment-contract/page-0.png

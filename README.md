@@ -13,6 +13,12 @@ Deterministic geometry for the *positions*. Claude for the *meaning*. You for th
 [![License: MIT](https://img.shields.io/badge/license-MIT-0066cc.svg)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#-contributing)
 
+<br>
+
+<img src="docs/demo.gif" alt="pdf-contract-assistant demo — select a field, edit its coordinates, confirm, export" width="92%" />
+
+<sub>Pick a field, nudge its exact coordinates, flip to <b>Confirmed</b>, export. Coordinates stay pixel-true.</sub>
+
 </div>
 
 ---
