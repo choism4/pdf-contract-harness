@@ -54,25 +54,53 @@
   .box[data-type="checkbox"] .tag { background:var(--accent2); }
   .box[data-type="signature_seal"] .tag { background:#c04bd0; }
   .box[data-type="table_cell"] .tag { background:#d9a23b; }
+  .box .ghost { position:absolute; left:3px; right:2px; bottom:1px; line-height:1;
+         color:rgba(40,90,200,.78); white-space:nowrap; overflow:hidden;
+         pointer-events:none; font-family:-apple-system,sans-serif; }
   .box .h { position:absolute; width:11px; height:11px; background:#fff;
          border:2px solid var(--accent); border-radius:2px; }
   .box .h.br { right:-7px; bottom:-7px; cursor:nwse-resize; }
   .box .h.tl { left:-7px; top:-7px; cursor:nwse-resize; }
-  /* 우측 */
-  #right { width:300px; flex:0 0 300px; background:var(--panel);
-           border-left:1px solid var(--line); overflow:auto; padding:12px; }
-  #right h2 { font-size:12px; color:var(--muted); margin:14px 0 8px;
-              text-transform:uppercase; letter-spacing:.05em; }
-  #right h2:first-child { margin-top:0; }
+  /* 우측 = 포토샵식 도크 패널 */
+  #right { width:320px; flex:0 0 320px; background:var(--panel);
+           border-left:1px solid var(--line); overflow:auto; }
+  .panel { border-bottom:1px solid var(--line); }
+  .ptitle { font-size:11px; color:var(--muted); text-transform:uppercase;
+            letter-spacing:.06em; padding:8px 12px; background:#21232a;
+            border-bottom:1px solid var(--line); display:flex; align-items:center;
+            gap:6px; position:sticky; top:0; z-index:2; }
+  .ptitle .sp { flex:1; }
+  .ptitle .chip { font-size:10px; color:#cfd2d8; background:#34373f;
+                  padding:1px 6px; border-radius:8px; }
+  .pbody { padding:10px 12px; }
+  /* 속성 행: 라벨(좌) + 컨트롤(우) */
+  .prow { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+  .prow > .k { flex:0 0 56px; font-size:11px; color:var(--muted); }
+  .prow > .v { flex:1; min-width:0; }
+  .prow .v input, .prow .v select { width:100%; }
+  .prow.num .v { flex:0 0 92px; display:flex; align-items:center; gap:4px; }
+  .prow.num .v input { width:54px; text-align:right; }
+  .prow.num .unit { font-size:11px; color:var(--muted); }
+  /* 상태 세그먼트 토글 */
+  .seg { display:flex; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  .seg button { flex:1; border:0; border-radius:0; background:#1b1c20;
+                color:var(--muted); padding:5px 0; font-size:12px; }
+  .seg button.on { background:var(--ok); color:#06210f; font-weight:600; }
+  .seg button.on.drafton { background:#b9893b; color:#1c1304; }
+  .prowbtn { display:flex; gap:8px; margin-top:10px; }
+  .prowbtn button { flex:1; }
+  /* 필드 목록 */
   .frow { padding:7px 9px; border:1px solid var(--line); border-radius:6px;
-          margin-bottom:6px; cursor:pointer; }
+          margin-bottom:6px; cursor:pointer; display:flex; align-items:center; gap:7px; }
   .frow:hover, .frow.hi { border-color:var(--accent); background:#2f323a; }
   .frow.sel { border-color:#ffd400; }
-  .frow .lbl { font-weight:600; }
-  .frow .meta { color:var(--muted); font-size:11px; }
+  .frow .dot { width:8px; height:8px; border-radius:50%; flex:0 0 8px;
+               background:var(--muted); }
+  .frow.cf .dot { background:var(--ok); }
+  .frow .lbl { font-weight:600; flex:1; min-width:0; overflow:hidden;
+               text-overflow:ellipsis; white-space:nowrap; }
+  .frow .ty { font-size:10px; color:var(--muted); }
   .empty { color:var(--muted); padding:16px; text-align:center; font-size:13px; }
-  .ed label { display:block; font-size:11px; color:var(--muted); margin:9px 0 3px; }
-  .ed .rowbtn { display:flex; gap:8px; margin-top:12px; }
   #status { position:fixed; bottom:8px; right:12px; font-size:11px; color:var(--muted); }
   .dirty { color:#ffd400; }
 </style>
@@ -157,6 +185,7 @@ function applyZoom(){
   const fitW=Math.max(200, main.clientWidth - 36);   // 패딩 제외 맞춤 폭
   document.getElementById("stage").style.width=(fitW*S.zoom)+"px";
   document.getElementById("zoomlbl").textContent=Math.round(S.zoom*100)+"%";
+  updateGhostSizes();
 }
 function setZoom(z, cx, cy){
   const main=document.getElementById("scroll");
@@ -213,24 +242,38 @@ function drawBoxes(){
     b.style.width=((x1-x0)*100)+"%"; b.style.height=((y1-y0)*100)+"%";
     const tag=document.createElement("span"); tag.className="tag";
     tag.textContent=f.label||f.type; b.appendChild(tag);
+    if(f.example){ const gh=document.createElement("span"); gh.className="ghost";
+      gh.textContent=f.example; gh.dataset.fs=f.font_size||10; b.appendChild(gh); }
     if(f.id===S.sel){ for(const h of ["tl","br"]){
       const hd=document.createElement("div"); hd.className="h "+h;
       hd.dataset.h=h; b.appendChild(hd); } }
     b.onmousedown=(e)=>startDragResize(e,f);
     stage.appendChild(b);
   }
+  updateGhostSizes();
+}
+// 예시값 고스트: font_size(pt)를 현재 렌더 스케일에 맞춰 px로
+function updateGhostSizes(){
+  const m=pageMeta(); if(!m) return;
+  const stageW=document.getElementById("stage").clientWidth || 1;
+  const pxPerPt=stageW/m.size_pt[0];          // 현재 표시 배율
+  document.querySelectorAll("#stage .ghost").forEach(g=>{
+    g.style.fontSize=(parseFloat(g.dataset.fs)*pxPerPt)+"px";
+  });
 }
 function drawRight(){
   const el=document.getElementById("rightbody");
   if(S.sel){ el.innerHTML=editorHTML(field(S.sel)); bindEditor(); return; }
   const fs=pageFields();
-  let h=`<h2>Fields (${fs.length})</h2>`;
-  if(!fs.length) h+='<div class="empty">이 페이지 필드 없음. "+ 필드 추가"로 그리기.</div>';
+  let h=`<div class="panel"><div class="ptitle"><span>Fields</span><span class="sp"></span>`
+      +`<span class="chip">${fs.length}</span></div><div class="pbody">`;
+  if(!fs.length) h+='<div class="empty">이 페이지 필드 없음.<br>"+ 필드 추가"로 그리기.</div>';
   for(const f of fs){
-    h+=`<div class="frow" data-id="${f.id}"><div class="lbl">${f.label||"<i>라벨 없음</i>"}</div>
-        <div class="meta">${f.type} · ${f.source} · ${f.status}${f.fill_hint?(" · "+esc(f.fill_hint)):""}</div></div>`;
+    h+=`<div class="frow ${f.status==="confirmed"?"cf":""}" data-id="${f.id}">
+        <span class="dot"></span><span class="lbl">${f.label?esc(f.label):"<i>라벨 없음</i>"}</span>
+        <span class="ty">${f.type.replace("underscore_blank","blank").replace("signature_seal","sign")}</span></div>`;
   }
-  el.innerHTML=h;
+  el.innerHTML=h+"</div></div>";
   el.querySelectorAll(".frow").forEach(d=>{
     d.onclick=()=>{ S.sel=d.dataset.id; render(); };
     d.onmouseenter=()=>hi(d.dataset.id,true); d.onmouseleave=()=>hi(d.dataset.id,false);
@@ -239,33 +282,40 @@ function drawRight(){
 function esc(s){ return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 function hi(id,on){ document.querySelectorAll(`.box[data-id="${id}"]`).forEach(e=>e.classList.toggle("hi",on)); }
 
-// ── 에디터 ───────────────────────────────────────────
+// ── 속성 패널 (포토샵식) ──────────────────────────────
 function editorHTML(f){
-  return `<h2>필드 편집 · ${f.id}</h2><div class="ed">
-    <label>라벨</label><input id="e_label" value="${esc(f.label)}">
-    <label>채울 내용(fill_hint)</label><input id="e_hint" value="${esc(f.fill_hint)}">
-    <label>타입</label><select id="e_type">${TYPES.map(t=>`<option ${t===f.type?"selected":""}>${t}</option>`).join("")}</select>
-    <label>상태</label><select id="e_status">
-      <option ${f.status==="draft"?"selected":""}>draft</option>
-      <option ${f.status==="confirmed"?"selected":""}>confirmed</option></select>
-    <label>좌표 (bbox_pt, 읽기전용)</label>
-    <input value="${f.bbox_pt.map(n=>n.toFixed(1)).join(", ")}" readonly>
-    <div class="rowbtn">
-      <button id="e_close">← 목록</button>
-      <button id="e_del" style="border-color:var(--accent);color:var(--accent)">삭제</button>
-    </div>
-    <div class="meta" style="margin-top:8px;color:var(--muted);font-size:11px">
-      source: ${f.source} · 박스를 드래그/모서리로 이동·리사이즈</div></div>`;
+  const fs = f.font_size!=null ? f.font_size : "";
+  return `<div class="panel">
+    <div class="ptitle"><span>속성</span><span class="sp"></span><span class="chip">${f.id}</span></div>
+    <div class="pbody">
+      <div class="prow"><span class="k">라벨</span><span class="v"><input id="e_label" value="${esc(f.label)}" placeholder="예: 이름"></span></div>
+      <div class="prow"><span class="k">예시값</span><span class="v"><input id="e_ex" value="${esc(f.example||"")}" placeholder="이런 값이 들어감 (예: 홍길동)"></span></div>
+      <div class="prow"><span class="k">설명</span><span class="v"><input id="e_hint" value="${esc(f.fill_hint)}" placeholder="무엇을 쓰나 (fill_hint)"></span></div>
+      <div class="prow num"><span class="k">글자크기</span><span class="v"><input id="e_fs" type="number" step="0.5" min="4" value="${fs}"><span class="unit">pt</span></span></div>
+      <div class="prow"><span class="k">타입</span><span class="v"><select id="e_type">${TYPES.map(t=>`<option ${t===f.type?"selected":""}>${t}</option>`).join("")}</select></span></div>
+      <div class="prow"><span class="k">상태</span><span class="v"><div class="seg">
+        <button id="e_draft" class="${f.status==="draft"?"on drafton":""}">draft</button>
+        <button id="e_conf" class="${f.status==="confirmed"?"on":""}">confirmed</button></div></span></div>
+      <div class="prow"><span class="k">좌표</span><span class="v"><input style="font-size:11px" value="${f.bbox_pt.map(n=>n.toFixed(1)).join(", ")}" readonly title="bbox_pt — 박스를 드래그/모서리로 수정"></span></div>
+      <div class="prowbtn">
+        <button id="e_close">← 목록</button>
+        <button id="e_del" style="border-color:var(--accent);color:var(--accent)">삭제</button>
+      </div>
+      <div class="empty" style="text-align:left;padding:6px 0 0;font-size:11px">source: ${f.source} · 박스 드래그/모서리로 위치·크기</div>
+    </div></div>`;
 }
 function bindEditor(){
   const f=field(S.sel);
-  const upd=(k,v)=>{ f[k]=v; if(k!=="status") f.source="manual"; setDirty(true); drawBoxes(); };
-  document.getElementById("e_label").oninput=e=>{ f.label=e.target.value; setDirty(true); drawBoxes(); };
-  document.getElementById("e_hint").oninput=e=>{ f.fill_hint=e.target.value; setDirty(true); };
-  document.getElementById("e_type").onchange=e=>{ f.type=e.target.value; setDirty(true); drawBoxes(); };
-  document.getElementById("e_status").onchange=e=>{ f.status=e.target.value; setDirty(true); drawBoxes(); };
-  document.getElementById("e_close").onclick=()=>{ S.sel=null; render(); };
-  document.getElementById("e_del").onclick=()=>{
+  const g=id=>document.getElementById(id);
+  g("e_label").oninput=e=>{ f.label=e.target.value; setDirty(true); drawBoxes(); };
+  g("e_ex").oninput=e=>{ f.example=e.target.value; setDirty(true); drawBoxes(); };
+  g("e_hint").oninput=e=>{ f.fill_hint=e.target.value; setDirty(true); };
+  g("e_fs").oninput=e=>{ f.font_size=e.target.value===""?null:parseFloat(e.target.value); setDirty(true); drawBoxes(); };
+  g("e_type").onchange=e=>{ f.type=e.target.value; setDirty(true); drawBoxes(); };
+  g("e_draft").onclick=()=>{ f.status="draft"; setDirty(true); drawBoxes(); drawRight(); };
+  g("e_conf").onclick=()=>{ f.status="confirmed"; setDirty(true); drawBoxes(); drawRight(); };
+  g("e_close").onclick=()=>{ S.sel=null; render(); };
+  g("e_del").onclick=()=>{
     S.doc.fields=S.doc.fields.filter(x=>x.id!==S.sel); S.sel=null; setDirty(true); render(); };
 }
 

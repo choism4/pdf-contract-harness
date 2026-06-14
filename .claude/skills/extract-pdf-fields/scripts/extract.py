@@ -162,12 +162,15 @@ def fill_box(bbox):
 
 def mk_field(fid, page_idx, ftype, bbox, pw, ph, source, label="", row_text=""):
     x0, y0, x1, y1 = bbox
+    h = abs(y1 - y0)
     return {
         "id": fid,
         "page": page_idx,
         "type": ftype,
         "label": label,
-        "fill_hint": "",
+        "fill_hint": "",               # 설명: 무엇을 써야 하는지 (예: "출연자 성명")
+        "example": "",                 # 예시값: 이런 값이 들어간다 (예: "홍길동")
+        "font_size": round(h * 0.72, 1),  # 채울 글자 크기(pt), 박스 높이 기준 기본값
         "context": row_text,           # Claude가 라벨링할 때 참고할 행 전체 텍스트
         "value": None,
         "bbox_pt": [round(x0, 2), round(y0, 2), round(x1, 2), round(y1, 2)],

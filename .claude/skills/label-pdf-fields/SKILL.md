@@ -18,7 +18,9 @@ description: Semantically label the extracted fill-in fields in a contract's fie
 1. `projects/<subject>/fields.json`을 읽는다. 필요하면 `page-N.png`(또는 `page-N.overlay.png`)을 같이 본다.
 2. 각 필드에 대해 `context`를 근거로:
    - **`label`**: 이 빈칸이 무엇인지 (예: `이름`, `주민등록번호`, `계좌번호`). 추출이 채운 라벨이 맞으면 둔다.
-   - **`fill_hint`**: 무엇을 써야 하는지 한 줄 (예: `출연자 성명`, `갑(제작사) 상호명`). 다운스트림 Claude가 이걸 보고 채운다.
+   - **`fill_hint`**: 무엇을 써야 하는지 설명 한 줄 (예: `출연자 성명`). 다운스트림 Claude가 이걸 보고 채운다.
+   - **`example`**: 들어갈 예시값 한 개 (예: `홍길동`, `900101-1234567`). 웹앱에서 박스 안에 고스트로 미리 보인다.
+   - **`font_size`**: 채울 글자 크기(pt). 기본은 박스 높이 기준 자동. 칸에 맞게 조정 가능.
    - **`type`** 교정: 밑줄=`underline`, `___`=`underscore_blank`, 서명/날인 자리=`signature_seal`, 체크박스=`checkbox`, 표 칸=`table_cell`.
    - **`status`**: 라벨이 확실하면 `confirmed`, 사람 확인이 더 필요하면 `draft`로 둔다.
 3. `context`만으로 라벨이 모호한 빈칸(예: `(이하 "갑")` 앞 빈칸)은 렌더를 보고 판단한다. 그래도 불확실하면 `draft`로 두고 사용자에게 물어본다.

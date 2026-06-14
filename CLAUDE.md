@@ -103,6 +103,8 @@ pdf-contract-writer/
       "type": "underline",
       "label": "이름",
       "fill_hint": "출연자 성명",
+      "example": "홍길동",
+      "font_size": 9.5,
       "value": null,
       "bbox_pt":   [88.6, 200.6, 131.8, 214.6],
       "bbox_norm": [0.149, 0.238, 0.221, 0.255],

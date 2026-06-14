@@ -33,6 +33,8 @@ def build_export(doc: dict, include_all: bool = False) -> dict:
             "type": f["type"],
             "label": f.get("label", ""),
             "fill_hint": f.get("fill_hint", ""),
+            "example": f.get("example", ""),
+            "font_size": f.get("font_size"),
             "value": f.get("value"),
             "bbox_pt": f["bbox_pt"],
             "bbox_norm": f["bbox_norm"],
