@@ -439,8 +439,11 @@ function imgRect(){ return document.getElementById("pageimg").getBoundingClientR
 function startDragResize(e,f){
   if(e.button!==undefined && e.button!==0) return;
   e.preventDefault(); e.stopPropagation();
-  S.sel=f.id; drawRight();
-  const handle=e.target.dataset.h;
+  const handle=e.target.dataset.h;            // tl|br|undefined(move) — read before redraw
+  const wasSel=(S.sel===f.id);
+  S.sel=f.id;
+  if(!wasSel){ drawBoxes(); }                 // 첫 클릭에 바로 핸들 표시(한 번 클릭으로 편집)
+  drawRight();
   const r=imgRect(); const start=f.bbox_norm.slice();
   const sx=e.clientX, sy=e.clientY;
   function mv(ev){
@@ -518,6 +521,13 @@ document.getElementById("export").onclick=async()=>{
 // nav
 document.getElementById("prev").onclick=()=>{ if(S.doc&&S.page>0){S.page--;S.sel=null;render();} };
 document.getElementById("next").onclick=()=>{ if(S.doc&&S.page<S.doc.page_count-1){S.page++;S.sel=null;render();} };
+// Cmd/Ctrl+S = save (works even while typing in an input)
+document.addEventListener("keydown",e=>{
+  if((e.metaKey||e.ctrlKey)&&(e.key==="s"||e.key==="S")){
+    e.preventDefault();
+    if(S.doc&&S.dirty) document.getElementById("save").click();
+  }
+});
 // keys: Delete=remove, Esc=deselect
 document.addEventListener("keydown",e=>{
   if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT") return;
