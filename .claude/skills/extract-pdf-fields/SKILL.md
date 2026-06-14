@@ -38,6 +38,7 @@ cd <repo-root>
 
 ## 좌표 규약 (절대 규칙)
 
+- 밑줄/underscore 필드의 `bbox`는 **"글 쓰는 공간 사각형"** — 검출한 선을 **박스 바닥**에 두고 위로 `FILL_H`(기본 13pt)만큼 올린 영역. 선 한 줄이 아니라 텍스트가 들어갈 직사각형이다. 다운스트림은 이 사각형 안에 값을 쓴다.
 - 저장 좌표 = **좌상단 원점 PDF point**(`bbox_pt`) + **normalized 0..1**(`bbox_norm`).
 - pdfium은 좌하단 원점 → 스크립트가 이미 변환함. 다운스트림은 `bbox_norm`으로 임의 해상도에 매핑.
 - `label`/`fill_hint`만 사람·Claude가 수정. `bbox_*`는 추출 결과 유지(수동 추가/드래그 시에만 `source:"manual"`로 갱신).

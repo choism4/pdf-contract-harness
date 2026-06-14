@@ -23,6 +23,7 @@ import pypdfium2.raw as praw
 # ── 휴리스틱 임계값 (벡터 밑줄 판정) ─────────────────────────────
 UNDERLINE_MIN_W = 20.0   # pt: 이보다 넓어야 밑줄
 UNDERLINE_MAX_H = 3.0    # pt: 이보다 얇아야 밑줄(수평선)
+FILL_H          = 13.0   # pt: 밑줄 위 "글 쓰는 공간" 높이 → 박스를 선이 아닌 사각형으로
 CHECKBOX_MIN    = 5.0    # pt: 정사각 박스 한 변 최소
 CHECKBOX_MAX    = 18.0   # pt: 정사각 박스 한 변 최대
 CHECKBOX_RATIO  = 0.35   # 정사각 판정(가로세로 비율 차)
@@ -152,6 +153,13 @@ def extract_underscore_blanks(rows):
     return out
 
 
+def fill_box(bbox):
+    """밑줄/underscore bbox를 '쓰는 공간' 사각형으로: 선을 바닥에 두고 위로 FILL_H."""
+    x0, y0, y1 = bbox[0], bbox[1], bbox[3]
+    bottom = max(y0, y1)            # 선의 y(바닥)
+    return (bbox[0], bottom - FILL_H, bbox[2], bottom)
+
+
 def mk_field(fid, page_idx, ftype, bbox, pw, ph, source, label="", row_text=""):
     x0, y0, x1, y1 = bbox
     return {
@@ -180,12 +188,10 @@ def draw_overlay(page, scale, fields, out_path, page_h):
     for f in fields:
         x0, y0, x1, y1 = f["bbox_pt"]
         c = color.get(f["type"], (0, 160, 0))
-        # 밑줄은 위로 박스를 살짝 키워 "쓸 자리"를 보이게
-        pad = 16 if f["type"] in ("underline", "underscore_blank") else 1
-        dr.rectangle([x0 * scale, (y0 - pad) * scale, x1 * scale, (y1 + 2) * scale],
+        dr.rectangle([x0 * scale, y0 * scale, x1 * scale, y1 * scale],
                      outline=c, width=3)
         if f["label"]:
-            dr.text((x0 * scale, (y0 - pad) * scale - 14), f["label"], fill=c)
+            dr.text((x0 * scale, y0 * scale - 14), f["label"], fill=c)
     img.save(out_path)
     return out_path
 
@@ -229,13 +235,13 @@ def main():
         for bbox in underlines:
             lbl, rt = label_left_of(rows, bbox[0], (bbox[1] + bbox[3]) / 2)
             fid += 1
-            page_fields.append(mk_field(f"f{fid}", pi, "underline", bbox, pw, ph,
-                                        "vector", lbl, rt))
+            page_fields.append(mk_field(f"f{fid}", pi, "underline", fill_box(bbox),
+                                        pw, ph, "vector", lbl, rt))
         for bbox in us_blanks:
             lbl, rt = label_left_of(rows, bbox[0], (bbox[1] + bbox[3]) / 2)
             fid += 1
-            page_fields.append(mk_field(f"f{fid}", pi, "underscore_blank", bbox, pw, ph,
-                                        "underscore", lbl, rt))
+            page_fields.append(mk_field(f"f{fid}", pi, "underscore_blank", fill_box(bbox),
+                                        pw, ph, "underscore", lbl, rt))
         if args.checkboxes:
             for bbox in checkboxes:
                 fid += 1

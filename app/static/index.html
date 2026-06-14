@@ -164,6 +164,26 @@ document.getElementById("main").addEventListener("wheel",e=>{
   e.preventDefault(); setZoom(S.zoom + (e.deltaY<0?0.15:-0.15));
 },{passive:false});
 window.addEventListener("resize",()=>{ if(S.zoom===1) applyZoom(); });
+
+// ── 가운데 버튼 드래그 = 팬(이동) ─────────────────────
+(function(){
+  const main=document.getElementById("main");
+  let panning=false, sx=0, sy=0, sl=0, st=0;
+  main.addEventListener("mousedown",e=>{
+    if(e.button!==1) return;                 // 가운데 버튼만
+    e.preventDefault(); panning=true;
+    sx=e.clientX; sy=e.clientY; sl=main.scrollLeft; st=main.scrollTop;
+    main.style.cursor="grabbing";
+  });
+  window.addEventListener("mousemove",e=>{
+    if(!panning) return;
+    main.scrollLeft=sl-(e.clientX-sx); main.scrollTop=st-(e.clientY-sy);
+  });
+  window.addEventListener("mouseup",e=>{
+    if(e.button===1&&panning){ panning=false; main.style.cursor=""; }
+  });
+  main.addEventListener("auxclick",e=>{ if(e.button===1) e.preventDefault(); });
+})();
 function drawBoxes(){
   const stage=document.getElementById("stage");
   stage.querySelectorAll(".box").forEach(b=>b.remove());
@@ -235,6 +255,7 @@ function bindEditor(){
 // ── 드래그 / 리사이즈 ─────────────────────────────────
 function imgRect(){ return document.getElementById("pageimg").getBoundingClientRect(); }
 function startDragResize(e,f){
+  if(e.button!==undefined && e.button!==0) return;   // 좌클릭만 박스 이동(가운데=팬)
   e.preventDefault(); e.stopPropagation();
   S.sel=f.id; drawRight();
   const handle=e.target.dataset.h;            // tl|br|undefined(이동)
