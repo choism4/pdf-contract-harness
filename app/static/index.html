@@ -21,7 +21,9 @@
          font:15px/1.47 system-ui,-apple-system,"SF Pro Text",BlinkMacSystemFont,sans-serif;
          letter-spacing:-0.01em;
          background:var(--canvas); color:var(--ink); display:flex; height:100vh;
-         overflow:hidden; -webkit-font-smoothing:antialiased; }
+         overflow:hidden; -webkit-font-smoothing:antialiased;
+         user-select:none; -webkit-user-select:none; }
+  input,select,textarea,[contenteditable] { user-select:text; -webkit-user-select:text; }
   button { background:var(--panel); color:var(--ink); border:1px solid var(--line);
            border-radius:8px; padding:7px 14px; cursor:pointer; font:inherit;
            font-size:13px; letter-spacing:-0.01em;
@@ -44,14 +46,23 @@
   /* left */
   #sidebar { width:230px; flex:0 0 230px; background:var(--panel);
              border-right:1px solid var(--line); overflow:auto; padding:16px 12px; }
-  #sidebar h1 { font-size:11px; color:var(--muted); margin:0 0 12px 6px; font-weight:600;
+  #sidebar h1 { font-size:11px; color:var(--muted); margin:0 0 10px 6px; font-weight:600;
                 text-transform:uppercase; letter-spacing:.04em; }
+  #projsearch { margin-bottom:10px; font-size:13px; padding:7px 10px; }
   .proj { padding:9px 11px; border-radius:10px; cursor:pointer; margin-bottom:3px;
           transition:background .15s ease; }
   .proj:hover { background:var(--canvas); }
   .proj.active { background:var(--accent); color:#fff; }
-  .proj small { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
-  .proj.active small { color:rgba(255,255,255,.78); }
+  .proj .pname { font-weight:500; font-size:13px; overflow:hidden;
+                 text-overflow:ellipsis; white-space:nowrap; }
+  .proj small { display:flex; align-items:center; gap:6px; color:var(--muted);
+                font-size:11px; margin-top:3px; }
+  .proj.active small { color:rgba(255,255,255,.8); }
+  .pill { font-size:10px; padding:1px 7px; border-radius:980px; font-weight:600;
+          text-transform:capitalize; }
+  .pill.draft { background:#fff3e0; color:#b9762a; }
+  .pill.confirmed { background:#e3f9ea; color:#1c7d3f; }
+  .proj.active .pill { background:rgba(255,255,255,.22); color:#fff; }
   /* center */
   #main { flex:1; overflow:hidden; display:flex; flex-direction:column; }
   #toolbar { flex:0 0 auto; z-index:50; display:flex; gap:7px;
@@ -77,9 +88,15 @@
              box-shadow:0 0 0 4px rgba(255,159,10,.22); }
   .box .tag { position:absolute; left:-1.5px; top:-19px; font-size:11px; line-height:17px;
          white-space:nowrap; background:var(--field); color:#fff; padding:0 6px;
-         border-radius:5px; font-weight:500; letter-spacing:-0.01em; pointer-events:none; }
+         border-radius:5px; font-weight:500; letter-spacing:-0.01em;
+         pointer-events:auto; cursor:text; max-width:240px; overflow:hidden;
+         text-overflow:ellipsis; }
+  .box .tag:hover { filter:brightness(1.12); }
   .box[data-type="checkbox"] .tag { background:var(--field-cb); }
   .box[data-type="signature"] .tag { background:var(--field-sig); }
+  .box .taginput { position:absolute; left:-1.5px; top:-21px; height:19px; font-size:11px;
+         line-height:19px; padding:0 6px; border-radius:5px; border:1.5px solid var(--accent);
+         background:#fff; color:var(--ink); width:160px; z-index:6; box-shadow:0 1px 4px rgba(0,0,0,.2); }
   .box .ghost { position:absolute; left:3px; right:2px; bottom:1px; line-height:1;
          color:rgba(0,102,204,.85); white-space:nowrap; overflow:hidden;
          pointer-events:none; font-family:system-ui,-apple-system,sans-serif; }
@@ -88,6 +105,8 @@
          box-shadow:0 1px 3px rgba(0,0,0,.2); }
   .box .h.br { right:-7px; bottom:-7px; cursor:nwse-resize; }
   .box .h.tl { left:-7px; top:-7px; cursor:nwse-resize; }
+  .box .h.tr { right:-7px; top:-7px; cursor:nesw-resize; }
+  .box .h.bl { left:-7px; bottom:-7px; cursor:nesw-resize; }
   /* right = properties dock */
   #right { width:340px; flex:0 0 340px; background:var(--panel);
            border-left:1px solid var(--line); overflow:auto; }
@@ -136,6 +155,11 @@
   .prowbtn { display:flex; gap:8px; margin-top:14px; }
   .prowbtn button { flex:1; }
   /* field list */
+  .ftools { display:flex; align-items:center; gap:8px; margin-bottom:11px; }
+  .ftools #fsearch { font-size:13px; padding:6px 9px; }
+  .chk { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted);
+         white-space:nowrap; cursor:pointer; user-select:none; }
+  .chk input { width:auto; box-shadow:none; }
   .frow { padding:10px 11px; border:1px solid var(--line); border-radius:10px;
           margin-bottom:7px; cursor:pointer; display:flex; align-items:center; gap:9px;
           transition:background .12s ease, border-color .12s ease; }
@@ -157,7 +181,11 @@
 </style>
 </head>
 <body>
-  <aside id="sidebar"><h1>Projects</h1><div id="projlist"></div></aside>
+  <aside id="sidebar">
+    <h1>Projects</h1>
+    <input id="projsearch" placeholder="Search projects…" autocomplete="off">
+    <div id="projlist"></div>
+  </aside>
 
   <main id="main">
     <div id="toolbar">
@@ -200,16 +228,27 @@ function setDirty(v){ S.dirty=v;
 // ── projects ─────────────────────────────────────────
 async function loadProjects(){
   const {projects} = await j("/api/projects");
-  const el = document.getElementById("projlist"); el.innerHTML="";
-  if(!projects.length){ el.innerHTML='<div class="empty">projects/ is empty</div>'; return; }
-  for(const p of projects){
-    const d = document.createElement("div");
+  S._projects = projects;
+  renderProjects();
+}
+function renderProjects(){
+  const q=(S.projQuery||"").toLowerCase();
+  const list=(S._projects||[]).filter(p=>p.subject.toLowerCase().includes(q));
+  const el=document.getElementById("projlist"); el.innerHTML="";
+  if(!list.length){ el.innerHTML='<div class="empty">No matching projects</div>'; return; }
+  for(const p of list){
+    const d=document.createElement("div");
     d.className="proj"+(p.subject===S.subject?" active":"");
-    d.innerHTML=`${p.subject}<small>${p.has_fields?"fields ✓":"not extracted"}${p.has_export?" · export ✓":""}</small>`;
+    const pill=p.has_fields?`<span class="pill ${p.status||'draft'}">${p.status||'draft'}</span>`:'';
+    const meta=p.has_fields?`${p.field_count} fields${p.has_export?' · export ✓':''}`:'not extracted';
+    d.innerHTML=`<div class="pname">${esc(p.subject)}</div><small>${pill}<span>${meta}</span></small>`;
     d.onclick=()=>selectProject(p.subject);
     el.appendChild(d);
   }
 }
+document.getElementById("projsearch").addEventListener("input",e=>{
+  S.projQuery=e.target.value; renderProjects();
+});
 async function selectProject(subject){
   if(S.dirty && !confirm("You have unsaved changes. Discard and switch?")) return;
   S.subject=subject; S.page=0; S.sel=null; setDirty(false);
@@ -326,10 +365,13 @@ function drawBoxes(){
     b.style.left=(x0*100)+"%"; b.style.top=(y0*100)+"%";
     b.style.width=((x1-x0)*100)+"%"; b.style.height=((y1-y0)*100)+"%";
     const tag=document.createElement("span"); tag.className="tag";
-    tag.textContent=f.label||typeLabel(f.type); b.appendChild(tag);
+    tag.textContent=f.label||typeLabel(f.type); tag.title="Click to rename";
+    tag.onmousedown=(ev)=>ev.stopPropagation();
+    tag.onclick=(ev)=>{ ev.stopPropagation(); startTagEdit(f,b); };
+    b.appendChild(tag);
     if(f.example){ const gh=document.createElement("span"); gh.className="ghost";
       gh.textContent=f.example; gh.dataset.fs=f.font_size||10; b.appendChild(gh); }
-    if(f.id===S.sel){ for(const h of ["tl","br"]){
+    if(f.id===S.sel){ for(const h of ["tl","tr","bl","br"]){
       const hd=document.createElement("div"); hd.className="h "+h;
       hd.dataset.h=h; b.appendChild(hd); } }
     b.onmousedown=(e)=>startDragResize(e,f);
@@ -360,7 +402,11 @@ function docPanelHTML(){
 function fieldsListHTML(){
   const fs=pageFields();
   let h=`<div class="panel"><div class="ptitle"><span>Fields · page ${S.page+1}</span>
-        <span class="sp"></span><span class="chip">${fs.length}</span></div><div class="pbody">`;
+        <span class="sp"></span><span class="chip">${fs.length}</span></div><div class="pbody">
+        <div class="ftools">
+          <input id="fsearch" placeholder="Filter by label…" autocomplete="off" value="${esc(S.fieldQuery||"")}">
+          <label class="chk"><input type="checkbox" id="fhide" ${S.hideUnlabeled?"checked":""}>Labeled only</label>
+        </div>`;
   if(!fs.length) h+='<div class="empty">No fields on this page.<br>Use "+ Add field" to draw one.</div>';
   for(const f of fs){
     h+=`<div class="frow" data-id="${f.id}" data-type="${f.type}">
@@ -368,7 +414,7 @@ function fieldsListHTML(){
         <span class="lbl">${f.label?esc(f.label):"<i>No label</i>"}</span>
         <span class="ty">${typeLabel(f.type)}</span></div>`;
   }
-  return h+"</div></div>";
+  return h+'<div class="empty fnone" style="display:none">No fields match.</div></div></div>';
 }
 function drawRight(){
   const el=document.getElementById("rightbody");
@@ -383,10 +429,43 @@ function bindDocPanel(){
   if(g("d_conf"))  g("d_conf").onclick =()=>{ S.doc.status="confirmed"; setDirty(true); drawRight(); };
 }
 function bindList(){
+  const fsearch=document.getElementById("fsearch"), fhide=document.getElementById("fhide");
+  const apply=()=>{
+    const q=(S.fieldQuery||"").toLowerCase(); let shown=0, total=0;
+    document.querySelectorAll("#right .frow").forEach(d=>{
+      total++; const f=field(d.dataset.id); const lbl=(f.label||"").toLowerCase();
+      const ok=(!q||lbl.includes(q))&&(!S.hideUnlabeled||!!f.label);
+      d.style.display=ok?"":"none"; if(ok) shown++;
+    });
+    const chip=document.querySelector("#right .ptitle .chip");
+    if(chip) chip.textContent= (shown===total)? total : shown+"/"+total;
+    const none=document.querySelector("#right .fnone"); if(none) none.style.display=shown?"none":"";
+  };
+  if(fsearch) fsearch.oninput=()=>{ S.fieldQuery=fsearch.value; apply(); };
+  if(fhide) fhide.onchange=()=>{ S.hideUnlabeled=fhide.checked; apply(); };
   document.querySelectorAll("#right .frow").forEach(d=>{
     d.onclick=()=>focusField(d.dataset.id);
     d.onmouseenter=()=>hi(d.dataset.id,true); d.onmouseleave=()=>hi(d.dataset.id,false);
   });
+  apply();
+}
+// inline rename from the box tag
+function startTagEdit(f, box){
+  S.sel=f.id;
+  const old=box.querySelector(".tag"); if(old) old.style.visibility="hidden";
+  const inp=document.createElement("input"); inp.className="taginput";
+  inp.value=f.label||""; inp.placeholder="label";
+  box.appendChild(inp); inp.focus(); inp.select();
+  let done=false;
+  const commit=(save)=>{ if(done) return; done=true;
+    if(save){ f.label=inp.value.trim(); setDirty(true); }
+    drawBoxes(); drawRight(); };
+  inp.onmousedown=(e)=>e.stopPropagation();
+  inp.onclick=(e)=>e.stopPropagation();
+  inp.onkeydown=(e)=>{ e.stopPropagation();
+    if(e.key==="Enter"){ e.preventDefault(); commit(true); }
+    else if(e.key==="Escape"){ e.preventDefault(); commit(false); } };
+  inp.onblur=()=>commit(true);
 }
 function esc(s){ return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 function hi(id,on){ document.querySelectorAll(`.box[data-id="${id}"]`).forEach(e=>e.classList.toggle("hi",on)); }
@@ -452,6 +531,8 @@ function startDragResize(e,f){
     if(!handle){ x0+=dx;x1+=dx;y0+=dy;y1+=dy; }
     else if(handle==="br"){ x1+=dx;y1+=dy; }
     else if(handle==="tl"){ x0+=dx;y0+=dy; }
+    else if(handle==="tr"){ x1+=dx;y0+=dy; }
+    else if(handle==="bl"){ x0+=dx;y1+=dy; }
     x0=Math.max(0,Math.min(x0,0.999)); y0=Math.max(0,Math.min(y0,0.999));
     x1=Math.max(x0+0.005,Math.min(x1,1)); y1=Math.max(y0+0.003,Math.min(y1,1));
     f.bbox_norm=[r4(x0),r4(y0),r4(x1),r4(y1)]; recomputePt(f);
@@ -497,6 +578,13 @@ document.getElementById("stage").addEventListener("mousedown",function(e){
 document.getElementById("stage").addEventListener("click",function(e){
   if(e.target.id==="stage"||e.target.id==="pageimg"){ if(S.sel){S.sel=null;render();} }
 });
+// clear any stray text selection on non-input mousedown (avoids full-page highlight)
+document.addEventListener("mousedown",e=>{
+  const t=e.target;
+  if(/^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)||t.isContentEditable) return;
+  const s=window.getSelection&&window.getSelection();
+  if(s&&s.rangeCount) s.removeAllRanges();
+},true);
 
 // ── save ─────────────────────────────────────────────
 document.getElementById("save").onclick=async()=>{
@@ -507,6 +595,7 @@ document.getElementById("save").onclick=async()=>{
     body:JSON.stringify({data:S.doc})});
   S.mtime=res.mtime; setDirty(false);
   document.getElementById("status").textContent="✓ Saved "+new Date().toLocaleTimeString();
+  loadProjects();   // refresh status/count badges in the left list
 };
 
 // ── export (all fields → export.json) ────────────────
@@ -534,6 +623,8 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Escape"&&S.sel){ S.sel=null; render(); }
   if((e.key==="Delete"||e.key==="Backspace")&&S.sel){
     S.doc.fields=S.doc.fields.filter(x=>x.id!==S.sel); S.sel=null; setDirty(true); render(); }
+  if(e.key==="ArrowLeft"&&S.doc&&S.page>0){ S.page--;S.sel=null;render(); }
+  if(e.key==="ArrowRight"&&S.doc&&S.page<S.doc.page_count-1){ S.page++;S.sel=null;render(); }
 });
 
 // ── live-reload: paused while dirty (avoid clobbering Claude Code edits) ──

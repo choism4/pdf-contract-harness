@@ -47,10 +47,21 @@ def list_projects():
     if PROJECTS.is_dir():
         for d in sorted(PROJECTS.iterdir()):
             if (d / "source.pdf").exists():
+                status, n = None, 0
+                fp = d / "fields.json"
+                if fp.exists():
+                    try:
+                        doc = json.loads(fp.read_text(encoding="utf-8"))
+                        status = doc.get("status", "draft")
+                        n = len(doc.get("fields", []))
+                    except Exception:
+                        pass
                 out.append({
                     "subject": d.name,
-                    "has_fields": (d / "fields.json").exists(),
+                    "has_fields": fp.exists(),
                     "has_export": (d / "export.json").exists(),
+                    "status": status,
+                    "field_count": n,
                 })
     return {"projects": out}
 
