@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/banner.png" alt="pdf-contract-assistant" width="100%" />
+<img src="assets/banner.png" alt="pdf-contract-harness" width="100%" />
 
-<h1>pdf-contract-assistant</h1>
+<h1>pdf-contract-harness</h1>
 
 **Pinpoint every fillable field on a PDF contract — then export exact coordinates.**
 
@@ -15,9 +15,9 @@ Deterministic geometry for the *positions*. Claude for the *meaning*. You for th
 
 <br>
 
-<img src="docs/demo.gif" alt="pdf-contract-assistant demo — select a field, edit its coordinates, confirm, export" width="92%" />
+<img src="docs/hero.gif" alt="Claude Code labels a contract's fields, boxes snap into place, values fill in, export" width="94%" />
 
-<sub>Pick a field, nudge its exact coordinates, flip to <b>Confirmed</b>, export. Coordinates stay pixel-true.</sub>
+<sub>Ask Claude Code to label a contract → fields snap into place → values fill the blanks → export exact coordinates.</sub>
 
 </div>
 
@@ -61,6 +61,9 @@ The result is a precise-coordinate `export.json` that *another* program (or anot
 <div align="center">
 <img src="docs/screenshot-editor.png" alt="The correction studio" width="92%" />
 <br><sub>The correction studio — render + overlay + field list.</sub>
+<br><br>
+<img src="docs/demo.gif" alt="Selecting a field, editing its exact coordinates, confirming, exporting" width="92%" />
+<br><sub>The real app: pick a field, nudge its exact <code>X/Y/W/H</code>, flip to <b>Confirmed</b>, export.</sub>
 </div>
 
 ---
@@ -174,7 +177,7 @@ Just tell Claude Code: *"extract the fields from `projects/my-contract`"*, then 
 ## 🗂️ Project layout
 
 ```
-pdf-contract-assistant/
+pdf-contract-harness/
 ├─ app/
 │  ├─ server.py          # FastAPI: scan / read / save / export (no LLM calls)
 │  ├─ export.py          # build export.json  (python -m app.export <subject>)
@@ -184,6 +187,7 @@ pdf-contract-assistant/
 │  └─ label-pdf-fields/    # Claude semantic labeling workflow
 ├─ projects/
 │  └─ sample-employment-contract/   # bundled demo — open it on first run
+├─ motion/               # Remotion source for the hero animation (npm run render)
 └─ requirements.txt
 ```
 

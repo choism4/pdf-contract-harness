@@ -1,0 +1,21 @@
+{
+  "name": "pdf-contract-harness-motion",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Remotion hero animation for pdf-contract-harness",
+  "scripts": {
+    "still": "remotion still HeroAnim out/still.png --frame=180",
+    "render": "remotion render HeroAnim out/hero.mp4",
+    "studio": "remotion studio"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "^5.6.0"
+  }
+}

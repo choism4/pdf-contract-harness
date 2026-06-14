@@ -1,0 +1,425 @@
+{
+  "subject": "sample-employment-contract",
+  "source": "source.pdf",
+  "status": "confirmed",
+  "page_count": 1,
+  "pages": [
+    {
+      "index": 0,
+      "size_pt": [
+        595.28,
+        841.89
+      ],
+      "render": {
+        "file": "page-0.png",
+        "scale": 2,
+        "size_px": [
+          1191,
+          1684
+        ]
+      }
+    }
+  ],
+  "fields": [
+    {
+      "id": "f1",
+      "page": 0,
+      "type": "text",
+      "label": "Employer Name",
+      "fill_hint": "Employer legal/company name",
+      "example": "Acme Corp.",
+      "font_size": 7.5,
+      "context": "Employer: (“Employer”) and Employee:",
+      "value": null,
+      "bbox_pt": [
+        114.29,
+        117.7,
+        320.68,
+        130.66
+      ],
+      "bbox_norm": [
+        0.192,
+        0.1398,
+        0.5387,
+        0.1552
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f2",
+      "page": 0,
+      "type": "text",
+      "label": "Employee Name",
+      "fill_hint": "Employee full name",
+      "example": "John Doe",
+      "font_size": 7.5,
+      "context": "Employer: (“Employer”) and Employee:",
+      "value": null,
+      "bbox_pt": [
+        489.32,
+        117.7,
+        540.69,
+        130.66
+      ],
+      "bbox_norm": [
+        0.822,
+        0.1398,
+        0.9083,
+        0.1552
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f3",
+      "page": 0,
+      "type": "text",
+      "label": "Full Name",
+      "fill_hint": "Employee full legal name",
+      "example": "John Doe",
+      "font_size": 9.8,
+      "context": "Full Name: Date of Birth:",
+      "value": null,
+      "bbox_pt": [
+        134.3,
+        429.7,
+        300.68,
+        442.67
+      ],
+      "bbox_norm": [
+        0.2256,
+        0.5104,
+        0.5051,
+        0.5258
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f4",
+      "page": 0,
+      "type": "text",
+      "label": "Date of Birth",
+      "fill_hint": "Format YYYY-MM-DD",
+      "example": "1990-01-15",
+      "font_size": 9.8,
+      "context": "Full Name: Date of Birth:",
+      "value": null,
+      "bbox_pt": [
+        419.32,
+        429.7,
+        540.69,
+        442.67
+      ],
+      "bbox_norm": [
+        0.7044,
+        0.5104,
+        0.9083,
+        0.5258
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f5",
+      "page": 0,
+      "type": "text",
+      "label": "Address",
+      "fill_hint": "Residential address",
+      "example": "123 Main St, Springfield",
+      "font_size": 7.5,
+      "context": "Address:",
+      "value": null,
+      "bbox_pt": [
+        119.29,
+        459.67,
+        540.69,
+        472.72
+      ],
+      "bbox_norm": [
+        0.2004,
+        0.546,
+        0.9083,
+        0.5615
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f6",
+      "page": 0,
+      "type": "text",
+      "label": "Phone",
+      "fill_hint": "Contact phone number",
+      "example": "(555) 123-4567",
+      "font_size": 7.5,
+      "context": "Phone: Email:",
+      "value": null,
+      "bbox_pt": [
+        104.29,
+        489.73,
+        280.67,
+        502.69
+      ],
+      "bbox_norm": [
+        0.1752,
+        0.5817,
+        0.4715,
+        0.5971
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f7",
+      "page": 0,
+      "type": "text",
+      "label": "Email",
+      "fill_hint": "Email address",
+      "example": "john.doe@email.com",
+      "font_size": 7.5,
+      "context": "Phone: Email:",
+      "value": null,
+      "bbox_pt": [
+        374.31,
+        489.73,
+        540.69,
+        502.69
+      ],
+      "bbox_norm": [
+        0.6288,
+        0.5817,
+        0.9083,
+        0.5971
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f8",
+      "page": 0,
+      "type": "text",
+      "label": "Position",
+      "fill_hint": "Job title / role",
+      "example": "Software Engineer",
+      "font_size": 7.5,
+      "context": "Position: Start Date:",
+      "value": null,
+      "bbox_pt": [
+        119.29,
+        519.7,
+        300.68,
+        532.66
+      ],
+      "bbox_norm": [
+        0.2004,
+        0.6173,
+        0.5051,
+        0.6327
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f9",
+      "page": 0,
+      "type": "text",
+      "label": "Start Date",
+      "fill_hint": "Employment start date",
+      "example": "2026-07-01",
+      "font_size": 7.5,
+      "context": "Position: Start Date:",
+      "value": null,
+      "bbox_pt": [
+        404.31,
+        519.7,
+        540.69,
+        532.66
+      ],
+      "bbox_norm": [
+        0.6792,
+        0.6173,
+        0.9083,
+        0.6327
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f10",
+      "page": 0,
+      "type": "text",
+      "label": "Annual Salary",
+      "fill_hint": "Gross annual salary in USD",
+      "example": "85,000",
+      "font_size": 7.5,
+      "context": "Annual Salary: $",
+      "value": null,
+      "bbox_pt": [
+        164.3,
+        549.67,
+        320.68,
+        562.72
+      ],
+      "bbox_norm": [
+        0.276,
+        0.6529,
+        0.5387,
+        0.6684
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f11",
+      "page": 0,
+      "type": "text",
+      "label": "Bank Name",
+      "fill_hint": "Bank for payroll deposit",
+      "example": "First National Bank",
+      "font_size": 7.5,
+      "context": "Bank Name: Account No.:",
+      "value": null,
+      "bbox_pt": [
+        134.3,
+        579.73,
+        300.68,
+        592.69
+      ],
+      "bbox_norm": [
+        0.2256,
+        0.6886,
+        0.5051,
+        0.704
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f12",
+      "page": 0,
+      "type": "text",
+      "label": "Account No.",
+      "fill_hint": "Bank account number",
+      "example": "0123456789",
+      "font_size": 7.5,
+      "context": "Bank Name: Account No.:",
+      "value": null,
+      "bbox_pt": [
+        414.31,
+        579.73,
+        540.69,
+        592.69
+      ],
+      "bbox_norm": [
+        0.696,
+        0.6886,
+        0.9083,
+        0.704
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f13",
+      "page": 0,
+      "type": "signature",
+      "label": "Employee Signature",
+      "fill_hint": "Employee signs here",
+      "example": "",
+      "font_size": 7.5,
+      "context": "Employee Signature: Date:",
+      "value": null,
+      "bbox_pt": [
+        179.3,
+        619.72,
+        360.68,
+        632.68
+      ],
+      "bbox_norm": [
+        0.3012,
+        0.7361,
+        0.6059,
+        0.7515
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f14",
+      "page": 0,
+      "type": "text",
+      "label": "Date",
+      "fill_hint": "Date signed by employee",
+      "example": "2026-07-01",
+      "font_size": 7.5,
+      "context": "Employee Signature: Date:",
+      "value": null,
+      "bbox_pt": [
+        439.32,
+        619.72,
+        540.69,
+        632.68
+      ],
+      "bbox_norm": [
+        0.738,
+        0.7361,
+        0.9083,
+        0.7515
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f15",
+      "page": 0,
+      "type": "signature",
+      "label": "Employer Signature",
+      "fill_hint": "Employer representative signs here",
+      "example": "",
+      "font_size": 7.5,
+      "context": "Employer Signature: Date:",
+      "value": null,
+      "bbox_pt": [
+        179.3,
+        649.69,
+        360.68,
+        662.74
+      ],
+      "bbox_norm": [
+        0.3012,
+        0.7717,
+        0.6059,
+        0.7872
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    },
+    {
+      "id": "f16",
+      "page": 0,
+      "type": "text",
+      "label": "Date",
+      "fill_hint": "Date signed by employer",
+      "example": "2026-07-01",
+      "font_size": 7.5,
+      "context": "Employer Signature: Date:",
+      "value": null,
+      "bbox_pt": [
+        439.32,
+        649.69,
+        540.69,
+        662.74
+      ],
+      "bbox_norm": [
+        0.738,
+        0.7717,
+        0.9083,
+        0.7872
+      ],
+      "source": "vector",
+      "confidence": 0.9
+    }
+  ]
+}

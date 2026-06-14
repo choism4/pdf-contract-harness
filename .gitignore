@@ -6,6 +6,11 @@ __pycache__/
 # OS
 .DS_Store
 
+# Remotion motion project build artifacts
+motion/node_modules/
+motion/out/
+motion/.remotion/
+
 # User working projects — only the bundled sample ships in the repo
 projects/*/
 !projects/sample-employment-contract/
