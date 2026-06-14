@@ -30,12 +30,12 @@
   .proj.active small { color:#ffd; }
   /* 중앙 */
   #main { flex:1; overflow:auto; padding:18px; display:flex;
-          flex-direction:column; align-items:center; }
+          flex-direction:column; align-items:stretch; }
   #toolbar { width:100%; display:flex; gap:8px; align-items:center;
              margin-bottom:14px; color:var(--muted); flex-wrap:wrap; }
   #toolbar .title { color:var(--txt); font-weight:600; }
   #stage { position:relative; line-height:0; box-shadow:0 4px 24px #0008;
-           background:#fff; user-select:none; touch-action:none; }
+           background:#fff; user-select:none; touch-action:none; margin:0 auto; }
   #stage.adding { cursor:crosshair; }
   #stage img { display:block; max-width:100%; height:auto; pointer-events:none; }
   .box { position:absolute; border:2px solid var(--accent);
@@ -81,6 +81,9 @@
     <div id="toolbar">
       <span class="title" id="ttitle">프로젝트를 선택하세요</span>
       <span id="pageinfo"></span>
+      <button id="zoomout" title="축소">−</button>
+      <button id="zoomlbl" title="맞춤(reset)">100%</button>
+      <button id="zoomin" title="확대">+</button>
       <span style="flex:1"></span>
       <button id="addbtn">+ 필드 추가</button>
       <button id="prev">◀</button>
@@ -96,7 +99,7 @@
 
 <script>
 const S = { subject:null, page:0, doc:null, mtime:0, poll:null,
-            sel:null, dirty:false, mode:"select" };
+            sel:null, dirty:false, mode:"select", zoom:1 };
 const TYPES = ["underline","underscore_blank","checkbox","table_cell","signature_seal"];
 
 async function j(url, opts){ const r = await fetch(url, opts);
@@ -142,8 +145,25 @@ function render(){
   document.getElementById("ttitle").textContent=S.doc.subject;
   document.getElementById("pageinfo").textContent=`· page ${S.page+1}/${S.doc.page_count}`;
   document.getElementById("pageimg").src=`/api/project/${enc(S.subject)}/page/${S.page}?v=${S.mtime}`;
-  drawBoxes(); drawRight();
+  drawBoxes(); drawRight(); applyZoom();
 }
+
+// ── 확대/축소 ────────────────────────────────────────
+function applyZoom(){
+  const main=document.getElementById("main");
+  const fitW=Math.max(200, main.clientWidth - 36);   // 패딩 제외 맞춤 폭
+  document.getElementById("stage").style.width=(fitW*S.zoom)+"px";
+  document.getElementById("zoomlbl").textContent=Math.round(S.zoom*100)+"%";
+}
+function setZoom(z){ S.zoom=Math.max(0.25,Math.min(5,Math.round(z*100)/100)); applyZoom(); }
+document.getElementById("zoomin").onclick=()=>setZoom(S.zoom+0.25);
+document.getElementById("zoomout").onclick=()=>setZoom(S.zoom-0.25);
+document.getElementById("zoomlbl").onclick=()=>setZoom(1);
+document.getElementById("main").addEventListener("wheel",e=>{
+  if(!e.ctrlKey&&!e.metaKey) return;        // Ctrl/Cmd+휠 = 줌
+  e.preventDefault(); setZoom(S.zoom + (e.deltaY<0?0.15:-0.15));
+},{passive:false});
+window.addEventListener("resize",()=>{ if(S.zoom===1) applyZoom(); });
 function drawBoxes(){
   const stage=document.getElementById("stage");
   stage.querySelectorAll(".box").forEach(b=>b.remove());
