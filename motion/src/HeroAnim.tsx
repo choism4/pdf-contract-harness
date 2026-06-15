@@ -93,18 +93,21 @@ const tgtCy = (TARGET.bbox_norm[1] + TARGET.bbox_norm[3]) / 2 * DH;
 const SHOTS: Shot[] = [
   { f: 0, cx: DW / 2, cy: 0.2 * DH, z: 1.4 },
   { f: HUD_T0, cx: DW / 2, cy: 0.2 * DH, z: 1.4 },
-  { f: HUD_T1, cx: DW / 2, cy: 0.3 * DH, z: 2.4 },
-  { f: READ_S, cx: DW / 2, cy: 0.3 * DH, z: 2.6 },
-  { f: READ_E, cx: DW / 2, cy: 0.3 * DH, z: 2.6 },
-  { f: TOP_DROP - 4, cx: DW / 2, cy: 0.15 * DH, z: 2.8 },
-  { f: TOP_DROP + TOP.length * TOP_BEAT + 6, cx: DW / 2, cy: 0.15 * DH, z: 2.8 },
-  { f: BLOCK_DROP + 6, cx: 0.46 * DW, cy: 0.52 * DH, z: 2.35 },
-  { f: (BLOCK_DROP + LAST_DROP) / 2, cx: 0.5 * DW, cy: 0.62 * DH, z: 2.35 },
-  { f: LAST_DROP + 6, cx: 0.5 * DW, cy: 0.71 * DH, z: 2.35 },
-  { f: POINT_ZOOM, cx: tgtCx, cy: tgtCy, z: 3.1 },
-  { f: FIX_E + 6, cx: tgtCx, cy: tgtCy, z: 3.1 },
-  { f: OUT_S, cx: DW / 2, cy: 0.5 * DH, z: 1.28 },
-  { f: DURATION, cx: DW / 2, cy: 0.5 * DH, z: 1.24 },
+  { f: HUD_T1, cx: DW / 2, cy: 0.28 * DH, z: 1.8 },
+  { f: READ_S, cx: DW / 2, cy: 0.28 * DH, z: 2.0 },
+  { f: READ_E, cx: DW / 2, cy: 0.28 * DH, z: 2.0 },
+  // top fields (Employer/Employee names) span full width → fit width
+  { f: TOP_DROP - 4, cx: DW / 2, cy: 0.15 * DH, z: 1.5 },
+  { f: TOP_DROP + TOP.length * TOP_BEAT + 6, cx: DW / 2, cy: 0.15 * DH, z: 1.5 },
+  // employee block has two columns → keep both visible
+  { f: BLOCK_DROP + 6, cx: 0.5 * DW, cy: 0.5 * DH, z: 1.68 },
+  { f: (BLOCK_DROP + LAST_DROP) / 2, cx: 0.5 * DW, cy: 0.6 * DH, z: 1.68 },
+  { f: LAST_DROP + 6, cx: 0.5 * DW, cy: 0.7 * DH, z: 1.68 },
+  // single loose field → can go closer
+  { f: POINT_ZOOM, cx: tgtCx, cy: tgtCy, z: 2.5 },
+  { f: FIX_E + 6, cx: tgtCx, cy: tgtCy, z: 2.5 },
+  { f: OUT_S, cx: DW / 2, cy: 0.42 * DH, z: 1.16 },
+  { f: DURATION, cx: DW / 2, cy: 0.42 * DH, z: 1.12 },
 ];
 function camera(frame: number) {
   const fs = SHOTS.map((s) => s.f);
@@ -117,9 +120,11 @@ function camera(frame: number) {
 }
 const kf = (frame: number, a: number[], b: number[]) =>
   interpolate(frame, a, b, { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+// focus the doc in the UPPER region; terminal lives in the lower band → no overlap
+const VCY = 372;
 const mkProj = (cam: { cx: number; cy: number; z: number }) => (wx: number, wy: number) => ({
   x: (wx - cam.cx) * cam.z + VW / 2,
-  y: (wy - cam.cy) * cam.z + VH / 2,
+  y: (wy - cam.cy) * cam.z + VCY,
 });
 
 function rectWorld(f: F, frame: number, fps: number) {
@@ -156,10 +161,10 @@ export const HeroAnim: React.FC = () => {
   const t = kf(frame, [HUD_T0, HUD_T1], [0, 1]);
   // hero: big centered terminal · hud: wide panel pinned to the bottom
   const term = {
-    x: interpolate(t, [0, 1], [70, 40]),
-    y: interpolate(t, [0, 1], [360, 858]),
-    w: interpolate(t, [0, 1], [940, 1000]),
-    h: interpolate(t, [0, 1], [600, 452]),
+    x: interpolate(t, [0, 1], [70, 36]),
+    y: interpolate(t, [0, 1], [300, 772]),
+    w: interpolate(t, [0, 1], [940, 1008]),
+    h: interpolate(t, [0, 1], [560, 552]),
   };
   const termFont = interpolate(t, [0, 1], [31, 20]);
   const termLH = termFont * 1.42;
@@ -250,7 +255,7 @@ export const HeroAnim: React.FC = () => {
           return (
             <React.Fragment key={f.id}>
               <div style={{ position: "absolute", left: p.x, top: p.y, width: sw, height: sh, border: `${Math.max(2, cam.z)}px solid ${color}`, background: `${color}18`, borderRadius: 4, opacity: op, transform: `translateY(${ty}px) scale(${sc})`, transformOrigin: "center", boxShadow: `0 ${5 + (1 - sp) * 18}px ${10 + (1 - sp) * 26}px rgba(10,30,80,${0.05 + (1 - sp) * 0.14})` }} />
-              <div style={{ position: "absolute", left: p.x, top: p.y - 23, fontSize: 18, fontWeight: 700, color: "#fff", background: color, padding: "2px 9px", borderRadius: 7, opacity: labelOp, whiteSpace: "nowrap" }}>{f.label}</div>
+              <div style={{ position: "absolute", left: p.x, top: p.y - 27, fontSize: 22, fontWeight: 700, color: "#fff", background: color, padding: "2px 10px", borderRadius: 8, opacity: labelOp, whiteSpace: "nowrap" }}>{f.label}</div>
               {val && frame >= vs && (
                 <div style={{ position: "absolute", left: p.x + 6, top: p.y, height: sh, display: "flex", alignItems: "center", fontFamily: f.type === "signature" ? '"Snell Roundhand",cursive' : SANS, fontSize: f.type === "signature" ? Math.max(20, sh * 0.85) : Math.max(13, sh * 0.62), fontStyle: f.type === "signature" ? "italic" : "normal", fontWeight: f.type === "signature" ? 600 : 500, color: "#0b57b2", whiteSpace: "nowrap" }}>{val.slice(0, vChars)}</div>
               )}
