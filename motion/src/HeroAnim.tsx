@@ -214,7 +214,7 @@ export const HeroAnim: React.FC = () => {
     <AbsoluteFill style={{ background: "#0a0b0d", fontFamily: SANS }}>
       <AbsoluteFill style={{ background: "#eef0f3", opacity: kf(frame, [HUD_T0 - 6, HUD_T1], [0, 1]) }} />
 
-      <div style={{ position: "absolute", left: 44, top: 40, fontSize: 32, fontWeight: 700, letterSpacing: -0.6, color: "#1d1d1f", opacity: kf(frame, [HUD_T0, HUD_T1], [0, 1]) }}>
+      <div style={{ position: "absolute", left: 36, top: 32, fontSize: 32, fontWeight: 700, letterSpacing: -0.6, color: "#1d1d1f", opacity: kf(frame, [HUD_T0, HUD_T1], [0, 1]) * kf(frame, [OUT_S - 10, OUT_S], [1, 0]), background: "rgba(255,255,255,0.94)", padding: "12px 18px", borderRadius: 16, boxShadow: "0 8px 26px rgba(20,22,28,.16)" }}>
         pdf-contract-harness
         <div style={{ color: "#8a8f98", fontWeight: 500, fontSize: 20, marginTop: 2 }}>deterministic field extraction</div>
       </div>
@@ -351,7 +351,8 @@ export const HeroAnim: React.FC = () => {
       {/* caption */}
       {(() => {
         const op = kf(frame, [CAP_AT, CAP_AT + 12], [0, 1]);
-        return <div style={{ position: "absolute", left: 44, top: 96, opacity: op, fontSize: 30, fontWeight: 700, color: "#1d1d1f", lineHeight: "38px" }}>Pinpoint every field.<br /><span style={{ color: "#0a66d6" }}>Export exact coordinates.</span></div>;
+        const sp = spring({ frame: frame - CAP_AT, fps, config: { damping: 16, stiffness: 200 } });
+        return <div style={{ position: "absolute", left: "50%", top: 150, transform: `translateX(-50%) scale(${interpolate(sp, [0, 1], [0.9, 1])})`, opacity: op, background: "#1d1d1f", color: "#fff", fontSize: 38, fontWeight: 800, lineHeight: "50px", textAlign: "center", padding: "26px 40px", borderRadius: 24, boxShadow: "0 20px 60px rgba(0,0,0,.4)", whiteSpace: "nowrap" }}>Pinpoint every field.<br /><span style={{ color: "#5aa0ff" }}>Export exact coordinates.</span></div>;
       })()}
     </AbsoluteFill>
   );
